@@ -1,0 +1,62 @@
+# Log files
+logs/
+*.log
+
+# Configuration files with credentials
+privacy-tools.conf
+*.conf
+
+# Backup files
+*.backup
+*.bak
+*~
+
+# Temporary files
+*.tmp
+*.temp
+/tmp/
+
+# OS specific files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Python cache (if any Python scripts are added)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Environment files
+.env
+.env.local
+
+# VPN configuration files (may contain sensitive data)
+*.ovpn
+*.key
+*.crt
+*.pem
+
+# System files
+.fuse_hidden*
+.directory
+.Trash-*
+
+# ProtonVPN downloaded files
+protonvpn-stable-release*.deb
+
+# Test files
+test/
+tests/
+
+# Package manager files
+node_modules/
+vendor/
+
