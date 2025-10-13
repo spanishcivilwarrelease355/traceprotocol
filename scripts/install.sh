@@ -86,7 +86,6 @@ PACKAGES=(
     "conky-all"
     "dnsutils"
     "coreutils"
-    "dnscrypt-proxy2"
 )
 
 for package in "${PACKAGES[@]}"; do
@@ -95,6 +94,68 @@ for package in "${PACKAGES[@]}"; do
 done
 
 log "Base packages installation completed"
+
+# --- Step 2b: Install DNSCrypt-Proxy from GitHub ---
+log "Installing DNSCrypt-Proxy from GitHub..."
+
+DNSCRYPT_VERSION="2.1.5"
+DNSCRYPT_ARCH="linux_x86_64"
+DNSCRYPT_URL="https://github.com/DNSCrypt/dnscrypt-proxy/releases/download/${DNSCRYPT_VERSION}/dnscrypt-proxy-${DNSCRYPT_ARCH}-${DNSCRYPT_VERSION}.tar.gz"
+
+log_info "Downloading DNSCrypt-Proxy ${DNSCRYPT_VERSION}..."
+cd /tmp
+wget -q "$DNSCRYPT_URL" -O dnscrypt-proxy.tar.gz
+
+if [ -f dnscrypt-proxy.tar.gz ]; then
+    log_info "Extracting DNSCrypt-Proxy..."
+    tar -xzf dnscrypt-proxy.tar.gz
+    
+    cd linux-x86_64
+    
+    # Install binary
+    log_info "Installing DNSCrypt-Proxy binary..."
+    cp -f dnscrypt-proxy /usr/local/bin/
+    chmod +x /usr/local/bin/dnscrypt-proxy
+    
+    # Create config directory
+    mkdir -p /etc/dnscrypt-proxy
+    
+    # Copy configuration
+    cp -f example-dnscrypt-proxy.toml /etc/dnscrypt-proxy/dnscrypt-proxy.toml
+    
+    # Create systemd service
+    log_info "Creating DNSCrypt-Proxy systemd service..."
+    cat > /etc/systemd/system/dnscrypt-proxy.service << 'DNSCRYPTEOF'
+[Unit]
+Description=DNSCrypt-Proxy
+Documentation=https://github.com/DNSCrypt/dnscrypt-proxy
+Wants=network-online.target nss-lookup.target
+Before=nss-lookup.target
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/dnscrypt-proxy -config /etc/dnscrypt-proxy/dnscrypt-proxy.toml
+Restart=on-failure
+RestartSec=10
+User=nobody
+Group=nogroup
+
+[Install]
+WantedBy=multi-user.target
+DNSCRYPTEOF
+    
+    # Cleanup
+    cd /tmp
+    rm -rf linux-x86_64 dnscrypt-proxy.tar.gz
+    
+    # Reload systemd
+    systemctl daemon-reload
+    
+    log "${GREEN}DNSCrypt-Proxy installed successfully from GitHub!${NC}"
+else
+    log_warn "Failed to download DNSCrypt-Proxy. Skipping..."
+fi
 
 # --- Step 3: Install ProtonVPN CLI ---
 log "Setting up ProtonVPN CLI..."
@@ -131,10 +192,16 @@ log "Tor service enabled and started"
 
 # --- Step 5: Configure DNSCrypt ---
 log "Configuring DNSCrypt-Proxy..."
-# Try both dnscrypt-proxy and dnscrypt-proxy2 service names
-systemctl enable dnscrypt-proxy 2>/dev/null || systemctl enable dnscrypt-proxy2 >> "$LOG_FILE" 2>&1
-systemctl start dnscrypt-proxy 2>/dev/null || systemctl start dnscrypt-proxy2 >> "$LOG_FILE" 2>&1
-log "DNSCrypt-Proxy enabled and started"
+# Enable and start the dnscrypt-proxy service
+systemctl enable dnscrypt-proxy >> "$LOG_FILE" 2>&1
+systemctl start dnscrypt-proxy >> "$LOG_FILE" 2>&1
+
+# Check if it started successfully
+if systemctl is-active --quiet dnscrypt-proxy; then
+    log "DNSCrypt-Proxy enabled and started successfully"
+else
+    log_warn "DNSCrypt-Proxy service may not have started (check logs)"
+fi
 
 # --- Step 6: Configure Firewall (UFW) - Configure but keep disabled ---
 log "Configuring UFW firewall rules..."
@@ -366,7 +433,7 @@ ${color}Current MAC: ${color4}${exec IFACE=$(cat /var/lib/traceprotocol/interfac
 ${color4}${font DejaVu Sans Mono:size=10:bold}━━━ SECURITY STATUS ━━━${font}
 ${color}Kill Switch: ${exec bash -c 'ks=$(protonvpn-cli status 2>/dev/null | grep "Kill switch:"); if echo "$ks" | grep -qi "On"; then echo "${color1}✓ Enabled"; else echo "${color3}○ Disabled"; fi'}
 ${color}Tor: ${if_running tor}${color1}✓ Running${else}${color2}✗ Stopped${endif}
-${color}DNSCrypt: ${exec bash -c 'if systemctl is-active --quiet dnscrypt-proxy2 2>/dev/null || systemctl is-active --quiet dnscrypt-proxy 2>/dev/null; then echo "${color1}✓ Active"; else echo "${color2}✗ Inactive"; fi'}
+${color}DNSCrypt: ${exec bash -c 'if systemctl is-active --quiet dnscrypt-proxy 2>/dev/null; then echo "${color1}✓ Active"; else echo "${color2}✗ Inactive"; fi'}
 ${color}Firewall: ${exec bash -c 'if sudo ufw status 2>/dev/null | grep -qi "Status: active"; then echo "${color1}✓ Active"; else echo "${color2}✗ Inactive"; fi'}
 
 ${color4}${font DejaVu Sans Mono:size=10:bold}━━━ SYSTEM STATUS ━━━${font}

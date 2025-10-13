@@ -73,6 +73,13 @@ systemctl disable tor 2>/dev/null || true
 systemctl disable dnscrypt-proxy 2>/dev/null || true
 systemctl disable dnscrypt-proxy2 2>/dev/null || true
 
+# Remove DNSCrypt-Proxy from GitHub installation
+echo -e "${BLUE}Removing DNSCrypt-Proxy...${NC}"
+rm -f /usr/local/bin/dnscrypt-proxy 2>/dev/null || true
+rm -rf /etc/dnscrypt-proxy 2>/dev/null || true
+rm -f /etc/systemd/system/dnscrypt-proxy.service 2>/dev/null || true
+systemctl daemon-reload 2>/dev/null || true
+
 # Disable firewall
 echo -e "${BLUE}Disabling firewall...${NC}"
 ufw disable 2>/dev/null || true

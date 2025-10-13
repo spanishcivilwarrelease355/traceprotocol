@@ -215,11 +215,10 @@ main() {
     echo -e "${CYAN}━━━ Package Status ━━━${NC}"
 check_package "protonvpn-cli" "ProtonVPN CLI"
 check_package "tor" "Tor"
-# Check for either dnscrypt-proxy or dnscrypt-proxy2
-if dpkg -l | grep -qw "dnscrypt-proxy2" 2>/dev/null; then
-    print_status "pass" "DNSCrypt-Proxy2 is installed"
-elif dpkg -l | grep -qw "dnscrypt-proxy" 2>/dev/null; then
-    print_status "pass" "DNSCrypt-Proxy is installed"
+# Check for DNSCrypt-Proxy (installed from GitHub)
+if [ -f "/usr/local/bin/dnscrypt-proxy" ]; then
+    local dnscrypt_version=$(/usr/local/bin/dnscrypt-proxy --version 2>/dev/null | head -1)
+    print_status "pass" "DNSCrypt-Proxy is installed" "$dnscrypt_version"
 else
     print_status "fail" "DNSCrypt-Proxy is not installed"
 fi
@@ -228,20 +227,19 @@ check_package "macchanger" "MAC Changer"
     check_package "ufw" "UFW Firewall"
     check_package "bleachbit" "BleachBit"
     check_package "firejail" "Firejail"
-    check_package "signal-desktop" "Signal"
-    check_package "telegram-desktop" "Telegram"
+    check_package "torbrowser-launcher" "Tor Browser"
+    check_package "conky-all" "Conky Widget"
     echo ""
     
     # Service Checks
     echo -e "${CYAN}━━━ Service Status ━━━${NC}"
     check_service "tor" "Tor"
-    # Check both dnscrypt-proxy service names
-    if systemctl is-active --quiet dnscrypt-proxy2 2>/dev/null; then
-        print_status "pass" "DNSCrypt-Proxy2 is running"
-    elif systemctl is-active --quiet dnscrypt-proxy 2>/dev/null; then
-        print_status "pass" "DNSCrypt-Proxy is running"
+    # Check DNSCrypt-Proxy service
+    if systemctl is-active --quiet dnscrypt-proxy 2>/dev/null; then
+        local uptime=$(systemctl show dnscrypt-proxy -p ActiveEnterTimestamp --value)
+        print_status "pass" "DNSCrypt-Proxy is running" "Since: $uptime"
     else
-        print_status "fail" "DNSCrypt-Proxy is not running" "Run: sudo systemctl start dnscrypt-proxy2"
+        print_status "fail" "DNSCrypt-Proxy is not running" "Run: sudo systemctl start dnscrypt-proxy"
     fi
     check_service "apparmor" "AppArmor"
     echo ""
