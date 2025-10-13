@@ -473,15 +473,18 @@ CONKYEOF
 Type=Application
 Name=TraceProtocol Monitor
 Comment=TraceProtocol VPN and Privacy Status Monitor
-Exec=sh -c "sleep 15 && conky -c ~/.conkyrc"
+Exec=sh -c "sleep 10 && conky -c $HOME/.conkyrc"
 Icon=security-high
 Terminal=false
 Hidden=false
+NoDisplay=false
 X-GNOME-Autostart-enabled=true
 X-KDE-autostart-after=panel
 X-MATE-Autostart-enabled=true
+X-XFCE-Autostart-enabled=true
 Categories=System;Monitor;Security;
 StartupNotify=false
+StartupWMClass=Conky
 AUTOSTARTEOF
     
     chmod +x "$AUTOSTART_FILE"
