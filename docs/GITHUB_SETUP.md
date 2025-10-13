@@ -7,7 +7,7 @@ How to push your Privacy & VPN Manager project to GitHub.
 1. Go to [github.com](https://github.com) and login
 2. Click the **+** icon (top right) → **New repository**
 3. Fill in repository details:
-   - **Repository name**: `privacy-manager` (or your preferred name)
+   - **Repository name**: `traceprotocol` (or your preferred name)
    - **Description**: `A comprehensive privacy and VPN management tool for Linux systems`
    - **Visibility**: Public or Private
    - **DO NOT** initialize with README (we already have one)
@@ -20,10 +20,10 @@ How to push your Privacy & VPN Manager project to GitHub.
 cd /home/isdevis/Desktop/privacy
 
 # Add GitHub remote (replace YOUR_USERNAME with your GitHub username)
-git remote add origin https://github.com/YOUR_USERNAME/privacy-manager.git
+git remote add origin https://github.com/YOUR_USERNAME/traceprotocol.git
 
 # Or use SSH (if you have SSH keys set up)
-git remote add origin git@github.com:YOUR_USERNAME/privacy-manager.git
+git remote add origin git@github.com:YOUR_USERNAME/traceprotocol.git
 
 # Verify remote
 git remote -v
@@ -42,10 +42,10 @@ git push -u origin main
 
 ```bash
 # Edit README.md and replace this line:
-# git clone https://github.com/yourusername/privacy-manager.git
+# git clone https://github.com/yourusername/traceprotocol.git
 
 # With your actual GitHub URL:
-# git clone https://github.com/YOUR_USERNAME/privacy-manager.git
+# git clone https://github.com/YOUR_USERNAME/traceprotocol.git
 
 # Commit the change
 git add README.md
@@ -131,8 +131,8 @@ git push origin v1.0.0
    
    ### 🚀 Quick Start
    ```bash
-   git clone https://github.com/YOUR_USERNAME/privacy-manager.git
-   cd privacy-manager
+   git clone https://github.com/YOUR_USERNAME/traceprotocol.git
+   cd traceprotocol
    sudo ./trace-protocol.sh install
    ```
    
@@ -145,10 +145,10 @@ git push origin v1.0.0
 Add these badges at the top of your README.md:
 
 ```markdown
-![License](https://img.shields.io/github/license/YOUR_USERNAME/privacy-manager)
-![Version](https://img.shields.io/github/v/release/YOUR_USERNAME/privacy-manager)
-![Issues](https://img.shields.io/github/issues/YOUR_USERNAME/privacy-manager)
-![Stars](https://img.shields.io/github/stars/YOUR_USERNAME/privacy-manager)
+![License](https://img.shields.io/github/license/YOUR_USERNAME/traceprotocol)
+![Version](https://img.shields.io/github/v/release/YOUR_USERNAME/traceprotocol)
+![Issues](https://img.shields.io/github/issues/YOUR_USERNAME/traceprotocol)
+![Stars](https://img.shields.io/github/stars/YOUR_USERNAME/traceprotocol)
 ```
 
 ## Step 8: Share Your Project

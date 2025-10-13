@@ -3,13 +3,13 @@
 ## ✅ Latest Changes
 
 ### 1. **Script Renamed** 🎯
-**From**: `privacy-manager.sh`  
+**From**: `traceprotocol.sh`  
 **To**: `trace-protocol.sh`
 
 **All commands updated:**
 ```bash
 # Old way:
-./privacy-manager.sh install
+./traceprotocol.sh install
 
 # New way:
 ./trace-protocol.sh install
@@ -159,7 +159,7 @@ sudo ./trace-protocol.sh uninstall    # Remove everything
 
 | File | Change |
 |------|--------|
-| `privacy-manager.sh` | → `trace-protocol.sh` |
+| `traceprotocol.sh` | → `trace-protocol.sh` |
 | All 14 documentation files | Updated references |
 | `scripts/install.sh` | Added email/FTP ports |
 | `scripts/configure-ufw.sh` | Added email/FTP ports |

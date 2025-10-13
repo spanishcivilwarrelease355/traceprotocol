@@ -20,13 +20,15 @@ show_banner() {
     clear
     echo -e "${CYAN}"
     cat << "EOF"
-╔═══════════════════════════════════════════════════════════╗
-║                                                           ║
-║                    TraceProtocol v1.0.0                   ║
-║                                                           ║
-║          Privacy & VPN Management Suite                  ║
-║                                                           ║
-╚═══════════════════════════════════════════════════════════╝
+░▒▓████████▓▒░▒▓███████▓▒░ ░▒▓██████▓▒░ ░▒▓██████▓▒░░▒▓████████▓▒░▒▓███████▓▒░░▒▓███████▓▒░ ░▒▓██████▓▒░▒▓████████▓▒░▒▓██████▓▒░ ░▒▓██████▓▒░ ░▒▓██████▓▒░░▒▓█▓▒░        
+   ░▒▓█▓▒░   ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░  ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░        
+   ░▒▓█▓▒░   ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░  ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░        
+   ░▒▓█▓▒░   ░▒▓███████▓▒░░▒▓████████▓▒░▒▓█▓▒░      ░▒▓██████▓▒░ ░▒▓███████▓▒░░▒▓███████▓▒░░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░  ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░        
+   ░▒▓█▓▒░   ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░      ░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░  ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░        
+   ░▒▓█▓▒░   ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░  ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░        
+   ░▒▓█▓▒░   ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░░▒▓██████▓▒░░▒▓████████▓▒░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░░▒▓██████▓▒░  ░▒▓█▓▒░   ░▒▓██████▓▒░ ░▒▓██████▓▒░ ░▒▓██████▓▒░░▒▓████████▓▒░ 
+
+                                                                                                                                
 EOF
     echo -e "${NC}"
 }
@@ -35,7 +37,7 @@ EOF
 show_help() {
     show_banner
     echo -e "${GREEN}USAGE:${NC}"
-    echo "  ./privacy-manager.sh [COMMAND]"
+    echo "  ./trace-protocol.sh [COMMAND]"
     echo ""
     echo -e "${GREEN}COMMANDS:${NC}"
     echo -e "  ${CYAN}install${NC}          - Install all privacy tools and ProtonVPN"
@@ -59,10 +61,10 @@ show_help() {
     echo -e "  ${CYAN}version${NC}          - Show version information"
     echo ""
     echo -e "${GREEN}EXAMPLES:${NC}"
-    echo "  sudo ./privacy-manager.sh install  # Install all tools (with sudo)"
-    echo "  ./privacy-manager.sh vpn-setup     # Setup VPN (without sudo)"
-    echo "  ./privacy-manager.sh monitor       # Check system status"
-    echo "  ./privacy-manager.sh vpn-connect   # Connect to VPN (fastest)"
+    echo "  sudo ./trace-protocol.sh install  # Install all tools (with sudo)"
+    echo "  ./trace-protocol.sh vpn-setup     # Setup VPN (without sudo)"
+    echo "  ./trace-protocol.sh monitor       # Check system status"
+    echo "  ./trace-protocol.sh vpn-connect   # Connect to VPN (fastest)"
     echo "  protonvpn-cli c -f                 # Direct VPN connect"
     echo "  protonvpn-cli d                    # Direct VPN disconnect"
     echo ""
@@ -122,7 +124,7 @@ cmd_vpn_setup() {
     if [[ $EUID -eq 0 ]]; then
         echo -e "${RED}ERROR: Do NOT run vpn-setup with sudo!${NC}"
         echo -e "${YELLOW}Run it as your normal user:${NC}"
-        echo "  ./privacy-manager.sh vpn-setup"
+        echo "  ./trace-protocol.sh vpn-setup"
         echo ""
         exit 1
     fi
@@ -156,7 +158,7 @@ cmd_vpn_connect() {
     echo -e "${YELLOW}Connecting to ProtonVPN...${NC}"
     
     if ! command -v protonvpn-cli &>/dev/null; then
-        echo -e "${RED}ProtonVPN CLI is not installed. Run: ./privacy-manager.sh install${NC}"
+        echo -e "${RED}ProtonVPN CLI is not installed. Run: ./trace-protocol.sh install${NC}"
         exit 1
     fi
     
@@ -208,7 +210,7 @@ cmd_vpn_login() {
     echo ""
     
     if ! command -v protonvpn-cli &>/dev/null; then
-        echo -e "${RED}ProtonVPN CLI is not installed. Run: ./privacy-manager.sh install${NC}"
+        echo -e "${RED}ProtonVPN CLI is not installed. Run: ./trace-protocol.sh install${NC}"
         exit 1
     fi
     
@@ -312,7 +314,7 @@ cmd_firewall_off() {
     echo -e "${YELLOW}✓ Firewall disabled!${NC}"
     echo ""
     echo -e "${BLUE}Note: Your system is now less protected.${NC}"
-    echo "Enable it again with: ./privacy-manager.sh firewall-on"
+    echo "Enable it again with: ./trace-protocol.sh firewall-on"
     echo ""
 }
 

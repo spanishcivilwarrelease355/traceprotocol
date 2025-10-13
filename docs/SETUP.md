@@ -27,8 +27,8 @@ You need a ProtonVPN account to use the VPN features:
 ```bash
 # Clone to your preferred location
 cd ~/Desktop
-git clone https://github.com/yourusername/privacy-manager.git
-cd privacy-manager
+git clone https://github.com/yourusername/traceprotocol.git
+cd traceprotocol
 ```
 
 ### Step 2: Run Installation
@@ -160,7 +160,7 @@ sudo systemctl start protonvpn-autoconnect.service
 ### Check VPN Connection
 
 ```bash
-# Method 1: Using privacy-manager
+# Method 1: Using traceprotocol
 ./trace-protocol.sh vpn-status
 
 # Method 2: Using protonvpn-cli
