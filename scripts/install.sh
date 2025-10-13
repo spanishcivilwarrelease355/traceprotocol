@@ -140,13 +140,22 @@ log "DNSCrypt-Proxy enabled and started"
 log "Configuring UFW firewall rules..."
 # Configure UFW rules but keep it DISABLED for now
 # It will be enabled after ProtonVPN is connected
+ufw --force reset >> "$LOG_FILE" 2>&1
 ufw default deny incoming >> "$LOG_FILE" 2>&1
 ufw default allow outgoing >> "$LOG_FILE" 2>&1
-# Allow necessary ports
-ufw allow out 53 >> "$LOG_FILE" 2>&1
-ufw allow out 443 >> "$LOG_FILE" 2>&1
-ufw allow out 1194 >> "$LOG_FILE" 2>&1
-ufw allow out 5060 >> "$LOG_FILE" 2>&1
+
+# Allow essential outgoing connections
+ufw allow out 53 >> "$LOG_FILE" 2>&1       # DNS
+ufw allow out 80 >> "$LOG_FILE" 2>&1       # HTTP
+ufw allow out 443 >> "$LOG_FILE" 2>&1      # HTTPS
+ufw allow out 1194 >> "$LOG_FILE" 2>&1     # OpenVPN
+ufw allow out 5060 >> "$LOG_FILE" 2>&1     # ProtonVPN alt port
+ufw allow out 9418 >> "$LOG_FILE" 2>&1     # Git
+ufw allow out 22 >> "$LOG_FILE" 2>&1       # SSH
+
+# Allow established connections
+ufw logging off >> "$LOG_FILE" 2>&1
+
 log "Firewall rules configured (will be enabled after VPN setup)"
 
 # --- Step 7: Enable AppArmor ---

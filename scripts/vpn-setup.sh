@@ -143,8 +143,16 @@ if [[ "$connect_vpn" =~ ^[Yy]$ ]]; then
     echo ""
     echo -e "${CYAN}Step 4: Enable Firewall${NC}"
     echo ""
-    echo -e "${YELLOW}Enable UFW firewall? (Recommended for security) (y/n)${NC}"
-    read -p "Answer: " enable_ufw
+    echo -e "${YELLOW}Enable UFW firewall?${NC}"
+    echo ""
+    echo -e "${BLUE}Note:${NC} UFW provides extra security but may block some applications"
+    echo "(like Cursor IDE, development servers, etc.)"
+    echo ""
+    echo -e "${CYAN}Options:${NC}"
+    echo "  y - Enable UFW (more secure, may block some apps)"
+    echo "  n - Skip UFW (less secure, all apps work)"
+    echo ""
+    read -p "Enable UFW? (y/n): " enable_ufw
     
     if [[ "$enable_ufw" =~ ^[Yy]$ ]]; then
         echo ""
@@ -153,7 +161,13 @@ if [[ "$connect_vpn" =~ ^[Yy]$ ]]; then
         if sudo ufw --force enable; then
             echo ""
             echo -e "${GREEN}✓ UFW firewall enabled!${NC}"
-            echo "Firewall is now protecting your system."
+            echo ""
+            sudo ufw status verbose
+            echo ""
+            echo -e "${YELLOW}If some applications stop working:${NC}"
+            echo "  • Disable UFW: ./privacy-manager.sh firewall-off"
+            echo "  • Check status: sudo ufw status"
+            echo "  • Reconfigure: ./privacy-manager.sh firewall-config"
         else
             echo ""
             echo -e "${YELLOW}⚠ Failed to enable firewall.${NC}"
@@ -162,7 +176,11 @@ if [[ "$connect_vpn" =~ ^[Yy]$ ]]; then
     else
         echo ""
         echo -e "${BLUE}Firewall not enabled.${NC}"
-        echo "You can enable it later with: sudo ufw enable"
+        echo ""
+        echo -e "${YELLOW}Your VPN and kill switch still protect you,${NC}"
+        echo "but UFW provides an additional security layer."
+        echo ""
+        echo "Enable later with: ./privacy-manager.sh firewall-on"
     fi
 else
     echo ""

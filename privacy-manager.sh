@@ -49,6 +49,9 @@ show_help() {
     echo -e "  ${CYAN}vpn-login${NC}        - Login to ProtonVPN account"
     echo -e "  ${CYAN}killswitch-on${NC}    - Enable VPN kill switch"
     echo -e "  ${CYAN}killswitch-off${NC}   - Disable VPN kill switch"
+    echo -e "  ${CYAN}firewall-on${NC}      - Enable UFW firewall"
+    echo -e "  ${CYAN}firewall-off${NC}     - Disable UFW firewall"
+    echo -e "  ${CYAN}firewall-config${NC}  - Reconfigure UFW rules"
     echo -e "  ${CYAN}start-services${NC}   - Start all privacy services"
     echo -e "  ${CYAN}stop-services${NC}    - Stop all privacy services"
     echo -e "  ${CYAN}clean-logs${NC}       - Clean old log files"
@@ -284,6 +287,41 @@ cmd_stop_services() {
     echo -e "${YELLOW}Services stopped!${NC}"
 }
 
+# Firewall on
+cmd_firewall_on() {
+    show_banner
+    echo -e "${YELLOW}Enabling UFW firewall...${NC}"
+    echo ""
+    
+    sudo ufw --force enable
+    echo ""
+    echo -e "${GREEN}✓ Firewall enabled!${NC}"
+    echo ""
+    sudo ufw status verbose
+    echo ""
+}
+
+# Firewall off
+cmd_firewall_off() {
+    show_banner
+    echo -e "${YELLOW}Disabling UFW firewall...${NC}"
+    echo ""
+    
+    sudo ufw disable
+    echo ""
+    echo -e "${YELLOW}✓ Firewall disabled!${NC}"
+    echo ""
+    echo -e "${BLUE}Note: Your system is now less protected.${NC}"
+    echo "Enable it again with: ./privacy-manager.sh firewall-on"
+    echo ""
+}
+
+# Firewall config
+cmd_firewall_config() {
+    check_script "configure-ufw.sh"
+    sudo bash "$SCRIPT_DIR/scripts/configure-ufw.sh"
+}
+
 # Clean logs
 cmd_clean_logs() {
     show_banner
@@ -338,6 +376,15 @@ main() {
             ;;
         killswitch-off)
             cmd_killswitch_off
+            ;;
+        firewall-on)
+            cmd_firewall_on
+            ;;
+        firewall-off)
+            cmd_firewall_off
+            ;;
+        firewall-config)
+            cmd_firewall_config
             ;;
         start-services)
             cmd_start_services
