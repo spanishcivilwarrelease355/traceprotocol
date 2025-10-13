@@ -57,7 +57,9 @@ show_help() {
     echo -e "${GREEN}EXAMPLES:${NC}"
     echo "  ./privacy-manager.sh install       # Install all tools"
     echo "  ./privacy-manager.sh monitor       # Check system status"
-    echo "  ./privacy-manager.sh vpn-connect   # Connect to VPN"
+    echo "  ./privacy-manager.sh vpn-connect   # Connect to VPN (fastest)"
+    echo "  protonvpn-cli c -f                 # Direct VPN connect"
+    echo "  protonvpn-cli d                    # Direct VPN disconnect"
     echo ""
 }
 
@@ -138,9 +140,15 @@ cmd_vpn_connect() {
         exit 1
     fi
     
-    protonvpn-cli connect --fastest
+    protonvpn-cli c -f
     echo ""
-    echo -e "${GREEN}VPN connection established!${NC}"
+    
+    # Check if actually connected
+    if protonvpn-cli status 2>/dev/null | grep -qi "connected"; then
+        echo -e "${GREEN}VPN connection established!${NC}"
+    else
+        echo -e "${RED}VPN connection may have failed. Check with: protonvpn-cli status${NC}"
+    fi
 }
 
 # VPN disconnect command
@@ -153,7 +161,7 @@ cmd_vpn_disconnect() {
         exit 1
     fi
     
-    protonvpn-cli disconnect
+    protonvpn-cli d
     echo ""
     echo -e "${GREEN}VPN disconnected!${NC}"
 }
@@ -184,7 +192,15 @@ cmd_vpn_login() {
         exit 1
     fi
     
-    protonvpn-cli login
+    echo -e "${CYAN}Enter your ProtonVPN username:${NC}"
+    read -p "Username: " pvpn_username
+    
+    if [ -z "$pvpn_username" ]; then
+        echo -e "${RED}No username provided.${NC}"
+        exit 1
+    fi
+    
+    protonvpn-cli login "$pvpn_username"
 }
 
 # Kill switch on

@@ -149,9 +149,9 @@ systemctl enable apparmor >> "$LOG_FILE" 2>&1
 systemctl start apparmor >> "$LOG_FILE" 2>&1
 log "AppArmor enabled and started"
 
-# --- Step 8: Install Secure Messaging Apps ---
-log "Installing secure messaging applications..."
-apt install -y -qq signal-desktop telegram-desktop >> "$LOG_FILE" 2>&1 || log_warn "Some messaging apps failed to install (check repositories)"
+# --- Step 8: Install Secure Messaging Apps (SKIPPED) ---
+# User opted out of installing messaging apps
+# To install manually: apt install signal-desktop telegram-desktop
 
 # --- Step 9: Configure MAC Address Randomization ---
 log "Configuring MAC address randomization..."
@@ -364,67 +364,92 @@ echo ""
 if command -v protonvpn-cli &>/dev/null; then
     log_info "ProtonVPN CLI detected. Starting automatic configuration..."
     
-    # Ask if user wants automatic setup
-    echo ""
-    echo -e "${YELLOW}Would you like to configure ProtonVPN now? (y/n)${NC}"
-    read -p "Answer: " setup_vpn
-    
-    if [[ "$setup_vpn" =~ ^[Yy]$ ]]; then
+    # Check if we have SUDO_USER (not running as pure root)
+    if [ -z "$SUDO_USER" ] || [ "$SUDO_USER" = "root" ]; then
+        log_error "ProtonVPN setup requires running with sudo (not as root directly)"
+        log_info "Please run: sudo ./privacy-manager.sh install"
+    else
+        # Ask if user wants automatic setup
         echo ""
-        log "Starting ProtonVPN login process..."
-        log_warn "You will need your ProtonVPN username and password"
-        echo ""
+        echo -e "${YELLOW}Would you like to configure ProtonVPN now? (y/n)${NC}"
+        read -p "Answer: " setup_vpn
         
-        # Login to ProtonVPN
-        if protonvpn-cli login; then
-            log "${GREEN}ProtonVPN login successful!${NC}"
+        if [[ "$setup_vpn" =~ ^[Yy]$ ]]; then
+            echo ""
+            log "Starting ProtonVPN login process..."
             echo ""
             
-            # Ask about kill switch first (before connecting)
-            echo -e "${YELLOW}Enable kill switch? (Recommended - blocks internet if VPN disconnects) (y/n)${NC}"
-            read -p "Answer: " enable_ks
+            # Ask for ProtonVPN username
+            echo -e "${CYAN}Enter your ProtonVPN username:${NC}"
+            read -p "Username: " pvpn_username
             
-            if [[ "$enable_ks" =~ ^[Yy]$ ]]; then
-                log "Enabling kill switch..."
-                if protonvpn-cli ks --on >> "$LOG_FILE" 2>&1; then
-                    log "${GREEN}Kill switch enabled!${NC}"
-                else
-                    log_warn "Kill switch activation failed (you can enable it later)"
-                fi
+            if [ -z "$pvpn_username" ]; then
+                log_error "No username provided. Skipping ProtonVPN configuration."
             else
-                log_info "Kill switch not enabled (you can enable it later with: protonvpn-cli ks --on)"
-            fi
-            
-            echo ""
-            # Connect to VPN
-            echo -e "${YELLOW}Connect to VPN now? (y/n)${NC}"
-            read -p "Answer: " connect_vpn
-            
-            if [[ "$connect_vpn" =~ ^[Yy]$ ]]; then
-                log "Connecting to fastest VPN server..."
+                log "Logging in as user: $pvpn_username"
                 echo ""
-                if protonvpn-cli connect --fastest; then
-                    log "${GREEN}VPN connected successfully!${NC}"
+                
+                # Login to ProtonVPN as the actual user (not root)
+                if sudo -u "$SUDO_USER" protonvpn-cli login "$pvpn_username"; then
+                    log "${GREEN}ProtonVPN login successful!${NC}"
                     echo ""
-                    sleep 2
                     
-                    # Show connection status
-                    log_info "Current VPN Status:"
-                    protonvpn-cli status
+                    # Ask about kill switch first (before connecting)
+                    echo -e "${YELLOW}Enable kill switch? (Recommended - blocks internet if VPN disconnects) (y/n)${NC}"
+                    read -p "Answer: " enable_ks
+                    
+                    if [[ "$enable_ks" =~ ^[Yy]$ ]]; then
+                        log "Enabling kill switch..."
+                        if sudo -u "$SUDO_USER" protonvpn-cli ks --on >> "$LOG_FILE" 2>&1; then
+                            log "${GREEN}Kill switch enabled!${NC}"
+                        else
+                            log_warn "Kill switch activation failed (you can enable it later)"
+                        fi
+                    else
+                        log_info "Kill switch not enabled (you can enable it later with: protonvpn-cli ks --on)"
+                    fi
+                    
                     echo ""
+                    # Connect to VPN
+                    echo -e "${YELLOW}Connect to VPN now? (y/n)${NC}"
+                    read -p "Answer: " connect_vpn
+                    
+                    if [[ "$connect_vpn" =~ ^[Yy]$ ]]; then
+                        log "Connecting to fastest VPN server..."
+                        echo ""
+                        
+                        # Connect as user with -f flag (fastest)
+                        if sudo -u "$SUDO_USER" protonvpn-cli c -f; then
+                            sleep 3
+                            
+                            # Check if actually connected
+                            if sudo -u "$SUDO_USER" protonvpn-cli status 2>/dev/null | grep -qi "connected"; then
+                                log "${GREEN}VPN connected successfully!${NC}"
+                                echo ""
+                                
+                                # Show connection status
+                                log_info "Current VPN Status:"
+                                sudo -u "$SUDO_USER" protonvpn-cli status
+                                echo ""
+                            else
+                                log_error "VPN connection failed. Please check your connection."
+                                log_info "You can connect later with: protonvpn-cli c -f"
+                            fi
+                        else
+                            log_error "VPN connection failed (you can connect later with: protonvpn-cli c -f)"
+                        fi
+                    else
+                        log_info "VPN not connected (you can connect later with: protonvpn-cli c -f)"
+                    fi
                 else
-                    log_error "VPN connection failed (you can connect later with: protonvpn-cli connect --fastest)"
+                    log_error "ProtonVPN login failed"
+                    log_info "You can login later with: protonvpn-cli login YOUR_USERNAME"
                 fi
-            else
-                log_info "VPN not connected (you can connect later with: protonvpn-cli connect --fastest)"
             fi
         else
-            log_error "ProtonVPN login failed"
-            log_info "You can login later with: ./privacy-manager.sh vpn-login"
+            log_info "Skipping ProtonVPN configuration"
+            log_info "You can configure it later with: protonvpn-cli login YOUR_USERNAME"
         fi
-    else
-        log_info "Skipping ProtonVPN configuration"
-        log_info "You can configure it later with: ./privacy-manager.sh vpn-login"
     fi
 else
     log_error "ProtonVPN CLI not found. Please check installation."
@@ -458,8 +483,9 @@ log_info "TraceProtocol is now installed and configured!"
 echo ""
 log_info "Quick commands:"
 echo "  • Check status: ./privacy-manager.sh monitor"
-echo "  • Connect VPN: ./privacy-manager.sh vpn-connect"
-echo "  • Disconnect VPN: ./privacy-manager.sh vpn-disconnect"
+echo "  • Connect VPN: protonvpn-cli c -f"
+echo "  • Disconnect VPN: protonvpn-cli d"
+echo "  • VPN status: protonvpn-cli status"
 echo "  • View all commands: ./privacy-manager.sh help"
 echo ""
 log_info "Desktop Widget:"
