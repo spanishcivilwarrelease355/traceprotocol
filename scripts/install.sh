@@ -210,7 +210,31 @@ EOF
 
 log "Configuration file created at $SCRIPT_DIR/../privacy-tools.conf"
 
-# --- Step 11b: Create Conky Configuration ---
+# --- Step 11b: Save Original MAC Address ---
+log "Saving original MAC address..."
+
+# Create TraceProtocol directory
+mkdir -p /var/lib/traceprotocol
+chmod 755 /var/lib/traceprotocol
+
+# Get physical network interface (not VPN tunnel)
+PHYS_INTERFACE=$(ip route | grep -v "proton\|tun\|tap" | grep default | awk '{print $5}' | head -1)
+
+if [ -z "$PHYS_INTERFACE" ]; then
+    # Fallback: get first non-loopback interface
+    PHYS_INTERFACE=$(ip link show | grep -v "lo:\|proton\|tun\|tap" | grep "state UP" | awk -F: '{print $2}' | tr -d ' ' | head -1)
+fi
+
+if [ -n "$PHYS_INTERFACE" ]; then
+    ORIGINAL_MAC=$(ip link show "$PHYS_INTERFACE" | grep "link/ether" | awk '{print $2}')
+    if [ -n "$ORIGINAL_MAC" ]; then
+        echo "$ORIGINAL_MAC" > /var/lib/traceprotocol/original_mac.txt
+        echo "$PHYS_INTERFACE" > /var/lib/traceprotocol/interface.txt
+        log "Original MAC saved: $ORIGINAL_MAC (Interface: $PHYS_INTERFACE)"
+    fi
+fi
+
+# --- Step 11c: Create Conky Configuration ---
 log "Creating Conky desktop widget configuration..."
 
 if [ -n "$SUDO_USER" ]; then
@@ -285,11 +309,12 @@ ${color5}${font DejaVu Sans Mono:size=12:bold}║      TraceProtocol Monitor    
 ${color5}${font DejaVu Sans Mono:size=12:bold}╚═══════════════════════════════════╝${font}
 
 ${color4}${font DejaVu Sans Mono:size=10:bold}━━━ VPN STATUS ━━━${font}
-${color}Status: ${exec bash -c 'if command -v protonvpn-cli &>/dev/null; then status=$(protonvpn-cli status 2>/dev/null); if echo "$status" | grep -qi "Status:.*Connected\|connected"; then echo "${color1}✓ Connected"; else echo "${color2}✗ Disconnected"; fi; else echo "${color3}⚠ Not Installed"; fi'}
-${if_match ${exec bash -c 'protonvpn-cli status 2>/dev/null | grep -qi "Status:.*Connected\|connected" && echo 1 || echo 0'} == 1}\
-${color}Server: ${color4}${execi 30 protonvpn-cli status 2>/dev/null | grep "Server:" | cut -d: -f2 | xargs}
-${color}VPN IP: ${color4}${execi 30 protonvpn-cli status 2>/dev/null | grep "IP:" | cut -d: -f2 | xargs}
-${color}Country: ${color4}${execi 30 protonvpn-cli status 2>/dev/null | grep "Country:" | cut -d: -f2 | xargs}
+${color}Status: ${exec bash -c 'if protonvpn-cli status 2>/dev/null | grep -q "Server:"; then echo "${color1}✓ Connected"; else echo "${color2}✗ Disconnected"; fi'}
+${if_match ${exec bash -c 'protonvpn-cli status 2>/dev/null | grep -q "Server:" && echo 1 || echo 0'} == 1}\
+${color}Server: ${color4}${execi 30 protonvpn-cli status 2>/dev/null | grep "Server:" | awk '{print $2}'}
+${color}VPN IP: ${color4}${execi 30 protonvpn-cli status 2>/dev/null | grep "IP:" | awk '{print $2}'}
+${color}Country: ${color4}${execi 30 protonvpn-cli status 2>/dev/null | grep "Country:" | awk '{print $2}'}
+${color}Load: ${color4}${execi 30 protonvpn-cli status 2>/dev/null | grep "Server Load:" | awk '{print $3}'}
 ${else}\
 ${color3}No VPN Connection
 ${color}Real IP: ${color2}${execi 60 curl -s https://api.ipify.org 2>/dev/null || echo "Checking..."}
@@ -297,15 +322,15 @@ ${endif}
 
 ${color4}${font DejaVu Sans Mono:size=10:bold}━━━ IP ADDRESSES ━━━${font}
 ${color}Public IP: ${color4}${execi 60 curl -s https://api.ipify.org 2>/dev/null || echo "Checking..."}
-${color}Local IP: ${color4}${addr ${gw_iface}}
+${color}VPN Tunnel: ${color4}${addr proton0}
 
 ${color4}${font DejaVu Sans Mono:size=10:bold}━━━ MAC ADDRESSES ━━━${font}
-${color}Interface: ${color4}${gw_iface}
-${color}Original MAC: ${color4}${exec cat /var/lib/traceprotocol/original_mac.txt 2>/dev/null || echo "N/A"}
-${color}Current MAC: ${color4}${exec ip link show ${gw_iface} 2>/dev/null | grep "link/ether" | awk '{print $2}'}
+${color}Interface: ${color4}${exec ip route | grep -v proton0 | grep default | awk '{print $5}' | head -1}
+${color}Original MAC: ${color4}${exec cat /var/lib/traceprotocol/original_mac.txt 2>/dev/null || echo "Run mac-changer.sh"}
+${color}Current MAC: ${color4}${exec IFACE=$(ip route | grep -v proton0 | grep default | awk '{print $5}' | head -1); ip link show $IFACE 2>/dev/null | grep "link/ether" | awk '{print $2}'}
 
 ${color4}${font DejaVu Sans Mono:size=10:bold}━━━ SECURITY STATUS ━━━${font}
-${color}Kill Switch: ${exec bash -c 'if command -v protonvpn-cli &>/dev/null; then ks=$(protonvpn-cli ks --status 2>/dev/null); if echo "$ks" | grep -qi "enabled\|on"; then echo "${color1}✓ Enabled"; else echo "${color3}○ Disabled"; fi; else echo "${color2}✗ N/A"; fi'}
+${color}Kill Switch: ${exec bash -c 'ks=$(protonvpn-cli status 2>/dev/null | grep "Kill switch:"); if echo "$ks" | grep -qi "On"; then echo "${color1}✓ Enabled"; else echo "${color3}○ Disabled"; fi'}
 ${color}Tor: ${if_running tor}${color1}✓ Running${else}${color2}✗ Stopped${endif}
 ${color}DNSCrypt: ${exec bash -c 'if systemctl is-active --quiet dnscrypt-proxy2 2>/dev/null || systemctl is-active --quiet dnscrypt-proxy 2>/dev/null; then echo "${color1}✓ Active"; else echo "${color2}✗ Inactive"; fi'}
 ${color}Firewall: ${exec bash -c 'if sudo ufw status 2>/dev/null | grep -qi "Status: active"; then echo "${color1}✓ Active"; else echo "${color2}✗ Inactive"; fi'}
