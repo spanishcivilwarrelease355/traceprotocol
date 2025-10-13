@@ -103,12 +103,13 @@ check_protonvpn() {
     # Check connection status
     local vpn_status=$(protonvpn-cli status 2>/dev/null)
     
-    if echo "$vpn_status" | grep -qi "connected"; then
-        local server=$(echo "$vpn_status" | grep -i "server" | cut -d: -f2 | xargs)
-        local ip=$(echo "$vpn_status" | grep -i "ip" | cut -d: -f2 | xargs)
-        print_status "pass" "ProtonVPN is connected" "Server: $server | IP: $ip"
+    if echo "$vpn_status" | grep -qi "Status:.*Connected\|connected"; then
+        local server=$(echo "$vpn_status" | grep -i "Server:" | cut -d: -f2 | xargs)
+        local vpn_ip=$(echo "$vpn_status" | grep -i "IP:" | cut -d: -f2 | xargs)
+        local country=$(echo "$vpn_status" | grep -i "Country:" | cut -d: -f2 | xargs)
+        print_status "pass" "ProtonVPN is connected" "Server: $server | VPN IP: $vpn_ip | Country: $country"
     else
-        print_status "warn" "ProtonVPN is not connected" "Run: protonvpn-cli connect --fastest"
+        print_status "warn" "ProtonVPN is not connected" "Run: protonvpn-cli c -f"
     fi
     
     # Check kill switch status
@@ -148,14 +149,18 @@ check_dns() {
 
 # Function to check MAC randomization
 check_mac_randomization() {
-    if grep -q 'macchanger' /etc/network/interfaces 2>/dev/null; then
-        if grep -q '^[^#]*macchanger' /etc/network/interfaces 2>/dev/null; then
-            print_status "pass" "MAC address randomization is enabled"
+    if [ -f "/var/lib/traceprotocol/original_mac.txt" ]; then
+        local original_mac=$(cat /var/lib/traceprotocol/original_mac.txt 2>/dev/null)
+        local interface=$(ip route | grep default | awk '{print $5}' | head -1)
+        local current_mac=$(ip link show "$interface" 2>/dev/null | grep "link/ether" | awk '{print $2}')
+        
+        if [ "$original_mac" != "$current_mac" ] && [ -n "$original_mac" ] && [ -n "$current_mac" ]; then
+            print_status "pass" "MAC address is randomized" "Original: $original_mac → Current: $current_mac"
         else
-            print_status "warn" "MAC address randomization is configured but commented out"
+            print_status "info" "MAC address not randomized" "Current: $current_mac"
         fi
     else
-        print_status "warn" "MAC address randomization is not configured"
+        print_status "warn" "MAC randomization not configured" "Run: ./scripts/mac-changer.sh randomize"
     fi
 }
 
@@ -163,14 +168,21 @@ check_mac_randomization() {
 check_ip_leak() {
     if command -v curl &>/dev/null; then
         local public_ip=$(curl -s --max-time 5 https://api.ipify.org 2>/dev/null)
+        
         if [[ -n "$public_ip" ]]; then
-            print_status "info" "Public IP address: $public_ip"
-            
             # Check if using VPN
-            if protonvpn-cli status 2>/dev/null | grep -qi "connected"; then
-                print_status "pass" "IP is protected by VPN"
+            local vpn_status=$(protonvpn-cli status 2>/dev/null)
+            
+            if echo "$vpn_status" | grep -qi "Status:.*Connected\|connected"; then
+                local vpn_ip=$(echo "$vpn_status" | grep -i "IP:" | cut -d: -f2 | xargs)
+                
+                if [ "$public_ip" = "$vpn_ip" ]; then
+                    print_status "pass" "IP is protected by VPN" "Public IP matches VPN IP: $public_ip"
+                else
+                    print_status "warn" "Possible IP leak" "Public: $public_ip | VPN: $vpn_ip"
+                fi
             else
-                print_status "warn" "IP is NOT protected by VPN"
+                print_status "warn" "IP is NOT protected by VPN" "Real IP exposed: $public_ip"
             fi
         else
             print_status "warn" "Could not retrieve public IP" "Check internet connection"

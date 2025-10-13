@@ -40,8 +40,28 @@ if ! command -v protonvpn-cli &>/dev/null; then
     exit 1
 fi
 
-echo -e "${YELLOW}This script will help you configure ProtonVPN.${NC}"
+echo -e "${YELLOW}This script will help you configure ProtonVPN and privacy features.${NC}"
 echo ""
+
+# Step 0: MAC Address Randomization
+echo -e "${CYAN}Step 0: MAC Address Randomization${NC}"
+echo ""
+echo -e "${YELLOW}Randomize your MAC address? (Recommended for privacy) (y/n)${NC}"
+read -p "Answer: " randomize_mac
+
+if [[ "$randomize_mac" =~ ^[Yy]$ ]]; then
+    echo ""
+    if [ -f "$(dirname "$0")/mac-changer.sh" ]; then
+        bash "$(dirname "$0")/mac-changer.sh" randomize
+    else
+        echo -e "${YELLOW}MAC changer script not found. Skipping...${NC}"
+    fi
+    echo ""
+else
+    echo ""
+    echo -e "${BLUE}MAC randomization skipped.${NC}"
+    echo ""
+fi
 
 # Step 1: Login
 echo -e "${CYAN}Step 1: ProtonVPN Login${NC}"
