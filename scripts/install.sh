@@ -53,7 +53,8 @@ log "Starting installation process..."
 
 # --- Step 1: System Update ---
 log "Updating system packages..."
-apt update >> "$LOG_FILE" 2>&1 && apt upgrade -y >> "$LOG_FILE" 2>&1
+DEBIAN_FRONTEND=noninteractive apt update >> "$LOG_FILE" 2>&1
+DEBIAN_FRONTEND=noninteractive apt upgrade -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" >> "$LOG_FILE" 2>&1
 log "System update completed"
 
 # --- Step 2: Install Base Privacy Tools ---
@@ -79,7 +80,7 @@ PACKAGES=(
 
 for package in "${PACKAGES[@]}"; do
     log_info "Installing $package..."
-    apt install -y "$package" >> "$LOG_FILE" 2>&1 || log_warn "Failed to install $package"
+    DEBIAN_FRONTEND=noninteractive apt install -y "$package" >> "$LOG_FILE" 2>&1 || log_warn "Failed to install $package"
 done
 
 log "Base packages installation completed"
@@ -96,11 +97,11 @@ log_info "Installing ProtonVPN repository..."
 dpkg -i protonvpn-stable-release_1.0.3-3_all.deb >> "$LOG_FILE" 2>&1
 
 log_info "Updating package list..."
-apt update >> "$LOG_FILE" 2>&1
+DEBIAN_FRONTEND=noninteractive apt update >> "$LOG_FILE" 2>&1
 
 log_info "Installing ProtonVPN packages..."
-apt install -y proton-vpn-gnome-desktop >> "$LOG_FILE" 2>&1
-apt install -y libayatana-appindicator3-1 gir1.2-ayatanaappindicator3-0.1 gnome-shell-extension-appindicator >> "$LOG_FILE" 2>&1 || log_warn "Some GUI packages failed to install (normal on non-GNOME systems)"
+DEBIAN_FRONTEND=noninteractive apt install -y proton-vpn-gnome-desktop >> "$LOG_FILE" 2>&1
+DEBIAN_FRONTEND=noninteractive apt install -y libayatana-appindicator3-1 gir1.2-ayatanaappindicator3-0.1 gnome-shell-extension-appindicator >> "$LOG_FILE" 2>&1 || log_warn "Some GUI packages failed to install (normal on non-GNOME systems)"
 
 # Cleanup
 rm -f /tmp/protonvpn-stable-release_1.0.3-3_all.deb
@@ -134,7 +135,7 @@ log "AppArmor enabled and started"
 
 # --- Step 8: Install Secure Messaging Apps ---
 log "Installing secure messaging applications..."
-apt install -y signal-desktop telegram-desktop >> "$LOG_FILE" 2>&1 || log_warn "Some messaging apps failed to install (check repositories)"
+DEBIAN_FRONTEND=noninteractive apt install -y signal-desktop telegram-desktop >> "$LOG_FILE" 2>&1 || log_warn "Some messaging apps failed to install (check repositories)"
 
 # --- Step 9: Configure MAC Address Randomization ---
 log "Configuring MAC address randomization..."
@@ -334,8 +335,8 @@ fi
 
 # --- Cleanup ---
 log "Running cleanup..."
-apt autoremove -y >> "$LOG_FILE" 2>&1
-apt clean >> "$LOG_FILE" 2>&1
+DEBIAN_FRONTEND=noninteractive apt autoremove -y >> "$LOG_FILE" 2>&1
+DEBIAN_FRONTEND=noninteractive apt clean >> "$LOG_FILE" 2>&1
 
 # --- Step 12: Automatic ProtonVPN Setup ---
 echo ""
