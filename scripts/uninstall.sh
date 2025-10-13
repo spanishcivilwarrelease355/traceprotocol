@@ -30,12 +30,23 @@ echo -e "${YELLOW}WARNING: This will remove all TraceProtocol packages and confi
 echo -e "${YELLOW}Press Ctrl+C to cancel, or Enter to continue...${NC}"
 read
 
-# Disconnect VPN first
+# Disconnect VPN first (as actual user, not root)
 echo -e "${BLUE}Disconnecting VPN...${NC}"
 if command -v protonvpn-cli &>/dev/null; then
-    protonvpn-cli disconnect 2>/dev/null || true
-    protonvpn-cli ks --off 2>/dev/null || true
+    if [ -n "$SUDO_USER" ]; then
+        # Run as the actual user who ran sudo
+        sudo -u "$SUDO_USER" protonvpn-cli disconnect 2>/dev/null || true
+        sudo -u "$SUDO_USER" protonvpn-cli ks --off 2>/dev/null || true
+    else
+        # Fallback if not run with sudo
+        protonvpn-cli disconnect 2>/dev/null || true
+        protonvpn-cli ks --off 2>/dev/null || true
+    fi
 fi
+
+# Stop Conky widget
+echo -e "${BLUE}Stopping Conky widget...${NC}"
+pkill conky 2>/dev/null || true
 
 # Stop services
 echo -e "${BLUE}Stopping services...${NC}"
@@ -81,8 +92,19 @@ rm -f /etc/apt/sources.list.d/protonvpn* 2>/dev/null || true
 # Clean up configurations
 echo -e "${BLUE}Cleaning up configurations...${NC}"
 rm -rf /etc/protonvpn 2>/dev/null || true
-rm -rf ~/.cache/protonvpn 2>/dev/null || true
-rm -rf ~/.config/protonvpn 2>/dev/null || true
+
+# Remove ProtonVPN user configurations
+if [ -n "$SUDO_USER" ]; then
+    rm -rf /home/$SUDO_USER/.cache/protonvpn 2>/dev/null || true
+    rm -rf /home/$SUDO_USER/.config/protonvpn 2>/dev/null || true
+    rm -f /home/$SUDO_USER/.conkyrc 2>/dev/null || true
+    rm -f /home/$SUDO_USER/.config/autostart/traceprotocol-conky.desktop 2>/dev/null || true
+else
+    rm -rf ~/.cache/protonvpn 2>/dev/null || true
+    rm -rf ~/.config/protonvpn 2>/dev/null || true
+    rm -f ~/.conkyrc 2>/dev/null || true
+    rm -f ~/.config/autostart/traceprotocol-conky.desktop 2>/dev/null || true
+fi
 
 # Reset network interfaces
 echo -e "${BLUE}Resetting network configurations...${NC}"
