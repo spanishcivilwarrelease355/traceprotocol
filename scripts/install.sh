@@ -217,21 +217,39 @@ log "Saving original MAC address..."
 mkdir -p /var/lib/traceprotocol
 chmod 755 /var/lib/traceprotocol
 
-# Get physical network interface (not VPN tunnel)
-PHYS_INTERFACE=$(ip route | grep -v "proton\|tun\|tap" | grep default | awk '{print $5}' | head -1)
-
-if [ -z "$PHYS_INTERFACE" ]; then
-    # Fallback: get first non-loopback interface
-    PHYS_INTERFACE=$(ip link show | grep -v "lo:\|proton\|tun\|tap" | grep "state UP" | awk -F: '{print $2}' | tr -d ' ' | head -1)
-fi
-
-if [ -n "$PHYS_INTERFACE" ]; then
-    ORIGINAL_MAC=$(ip link show "$PHYS_INTERFACE" | grep "link/ether" | awk '{print $2}')
-    if [ -n "$ORIGINAL_MAC" ]; then
-        echo "$ORIGINAL_MAC" > /var/lib/traceprotocol/original_mac.txt
-        echo "$PHYS_INTERFACE" > /var/lib/traceprotocol/interface.txt
-        log "Original MAC saved: $ORIGINAL_MAC (Interface: $PHYS_INTERFACE)"
+# Get all network interfaces (exclude lo, proton, tun, tap)
+FOUND_MAC=false
+for iface in $(ip link show | awk -F: '/state UP/ {gsub(/ /, "", $2); if ($2 !~ /^(lo|proton|tun|tap)/) print $2}'); do
+    # Get the full link info for this interface
+    LINK_INFO=$(ip link show "$iface" | grep "link/ether")
+    
+    if [ -n "$LINK_INFO" ]; then
+        # Try to get permanent MAC address (permaddr) - this is the hardware MAC
+        PERM_MAC=$(echo "$LINK_INFO" | grep -o "permaddr [0-9a-f:][0-9a-f:]*" | awk '{print $2}')
+        
+        # Get current MAC address
+        CURRENT_MAC=$(echo "$LINK_INFO" | awk '{print $2}')
+        
+        if [ -n "$PERM_MAC" ]; then
+            # Save permanent MAC as original (the real hardware MAC)
+            echo "$PERM_MAC" > /var/lib/traceprotocol/original_mac.txt
+            echo "$iface" > /var/lib/traceprotocol/interface.txt
+            log "Original MAC saved: $PERM_MAC (Interface: $iface) [Hardware MAC from permaddr]"
+            FOUND_MAC=true
+            break
+        elif [ -n "$CURRENT_MAC" ]; then
+            # Fallback: save current MAC
+            echo "$CURRENT_MAC" > /var/lib/traceprotocol/original_mac.txt
+            echo "$iface" > /var/lib/traceprotocol/interface.txt
+            log "Original MAC saved: $CURRENT_MAC (Interface: $iface) [No permaddr available]"
+            FOUND_MAC=true
+            break
+        fi
     fi
+done
+
+if [ "$FOUND_MAC" = false ]; then
+    log_warn "Could not save original MAC address"
 fi
 
 # --- Step 11c: Create Conky Configuration ---
@@ -325,9 +343,9 @@ ${color}Public IP: ${color4}${execi 60 curl -s https://api.ipify.org 2>/dev/null
 ${color}VPN Tunnel: ${color4}${addr proton0}
 
 ${color4}${font DejaVu Sans Mono:size=10:bold}━━━ MAC ADDRESSES ━━━${font}
-${color}Interface: ${color4}${exec ip route | grep -v proton0 | grep default | awk '{print $5}' | head -1}
-${color}Original MAC: ${color4}${exec cat /var/lib/traceprotocol/original_mac.txt 2>/dev/null || echo "Run mac-changer.sh"}
-${color}Current MAC: ${color4}${exec IFACE=$(ip route | grep -v proton0 | grep default | awk '{print $5}' | head -1); ip link show $IFACE 2>/dev/null | grep "link/ether" | awk '{print $2}'}
+${color}Interface: ${color4}${exec cat /var/lib/traceprotocol/interface.txt 2>/dev/null || ip link show | grep -v "lo:\|proton\|tun" | grep "state UP" | awk -F: '{print $2}' | tr -d ' ' | head -1}
+${color}Original MAC: ${color4}${exec cat /var/lib/traceprotocol/original_mac.txt 2>/dev/null || echo "Not saved"}
+${color}Current MAC: ${color4}${exec IFACE=$(cat /var/lib/traceprotocol/interface.txt 2>/dev/null || ip link show | grep -v "lo:\|proton\|tun" | grep "state UP" | awk -F: '{print $2}' | tr -d ' ' | head -1); ip link show $IFACE 2>/dev/null | grep "link/ether" | awk '{print $2}'}
 
 ${color4}${font DejaVu Sans Mono:size=10:bold}━━━ SECURITY STATUS ━━━${font}
 ${color}Kill Switch: ${exec bash -c 'ks=$(protonvpn-cli status 2>/dev/null | grep "Kill switch:"); if echo "$ks" | grep -qi "On"; then echo "${color1}✓ Enabled"; else echo "${color3}○ Disabled"; fi'}

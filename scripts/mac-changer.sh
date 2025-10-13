@@ -39,9 +39,19 @@ get_original_mac() {
     if [ -f "$MAC_BACKUP_FILE" ]; then
         cat "$MAC_BACKUP_FILE"
     else
-        # Get current MAC and save it as original
-        local mac=$(ip link show "$interface" | grep "link/ether" | awk '{print $2}')
-        echo "$mac" | sudo tee "$MAC_BACKUP_FILE" > /dev/null
+        # Try to get permanent MAC address first (permaddr)
+        local mac=$(ip link show "$interface" | grep "link/ether" | grep -o "permaddr [0-9a-f:]*" | awk '{print $2}')
+        
+        # If permaddr not available, use current MAC
+        if [ -z "$mac" ]; then
+            mac=$(ip link show "$interface" | grep "link/ether" | awk '{print $2}')
+        fi
+        
+        # Save it
+        if [ -n "$mac" ]; then
+            echo "$mac" | sudo tee "$MAC_BACKUP_FILE" > /dev/null
+        fi
+        
         echo "$mac"
     fi
 }
