@@ -74,6 +74,7 @@ PACKAGES=(
     "torbrowser-launcher"
     "conky-all"
     "dnsutils"
+    "coreutils"
 )
 
 for package in "${PACKAGES[@]}"; do

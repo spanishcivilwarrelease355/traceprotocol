@@ -34,10 +34,19 @@ read
 echo -e "${BLUE}Disconnecting VPN...${NC}"
 if command -v protonvpn-cli &>/dev/null; then
     if [ -n "$SUDO_USER" ] && [ "$SUDO_USER" != "root" ]; then
-        # Run as the actual user who ran sudo, suppress all output
-        sudo -u "$SUDO_USER" bash -c "protonvpn-cli disconnect >/dev/null 2>&1" || true
+        # Kill any existing ProtonVPN processes first
+        pkill -9 protonvpn 2>/dev/null || true
+        
+        # Disable kill switch first (with timeout)
+        timeout 5 sudo -u "$SUDO_USER" bash -c "protonvpn-cli ks --off" >/dev/null 2>&1 || true
         sleep 1
-        sudo -u "$SUDO_USER" bash -c "protonvpn-cli ks --off >/dev/null 2>&1" || true
+        
+        # Force disconnect with timeout
+        timeout 5 sudo -u "$SUDO_USER" bash -c "protonvpn-cli disconnect" >/dev/null 2>&1 || true
+        
+        # If still connected, kill OpenVPN processes
+        pkill -9 openvpn 2>/dev/null || true
+        
         echo -e "${GREEN}VPN disconnected${NC}"
     else
         echo -e "${YELLOW}Skipping VPN disconnect (run with sudo)${NC}"
