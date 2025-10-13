@@ -39,6 +39,7 @@ show_help() {
     echo ""
     echo -e "${GREEN}COMMANDS:${NC}"
     echo -e "  ${CYAN}install${NC}          - Install all privacy tools and ProtonVPN"
+    echo -e "  ${CYAN}uninstall${NC}        - Uninstall all privacy tools"
     echo -e "  ${CYAN}monitor${NC}          - Check status of all privacy tools"
     echo -e "  ${CYAN}monitor-live${NC}     - Continuously monitor status (refreshes every 30s)"
     echo -e "  ${CYAN}vpn-connect${NC}      - Connect to ProtonVPN (fastest server)"
@@ -90,6 +91,20 @@ cmd_install() {
         sudo bash "$SCRIPT_DIR/scripts/install.sh"
     else
         bash "$SCRIPT_DIR/scripts/install.sh"
+    fi
+}
+
+# Uninstall command
+cmd_uninstall() {
+    show_banner
+    echo -e "${RED}Starting uninstallation...${NC}"
+    echo ""
+    check_script "uninstall.sh"
+    
+    if [[ $EUID -ne 0 ]]; then
+        sudo bash "$SCRIPT_DIR/scripts/uninstall.sh"
+    else
+        bash "$SCRIPT_DIR/scripts/uninstall.sh"
     fi
 }
 
@@ -260,6 +275,9 @@ main() {
     case "${1:-}" in
         install)
             cmd_install
+            ;;
+        uninstall)
+            cmd_uninstall
             ;;
         monitor)
             cmd_monitor
