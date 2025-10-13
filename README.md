@@ -46,7 +46,7 @@ cd traceprotocol
 ### 2. Install All Privacy Tools
 
 ```bash
-sudo ./privacy-manager.sh install
+sudo ./trace-protocol.sh install
 ```
 
 This will:
@@ -59,7 +59,7 @@ This will:
 ### 3. Login to ProtonVPN
 
 ```bash
-./privacy-manager.sh vpn-login
+./trace-protocol.sh vpn-login
 ```
 
 Enter your ProtonVPN credentials when prompted.
@@ -67,19 +67,19 @@ Enter your ProtonVPN credentials when prompted.
 ### 4. Connect to VPN
 
 ```bash
-./privacy-manager.sh vpn-connect
+./trace-protocol.sh vpn-connect
 ```
 
 ### 5. Enable Kill Switch
 
 ```bash
-./privacy-manager.sh killswitch-on
+./trace-protocol.sh killswitch-on
 ```
 
 ### 6. Monitor Your Privacy Status
 
 ```bash
-./privacy-manager.sh monitor
+./trace-protocol.sh monitor
 ```
 
 ## 📖 Usage
@@ -87,7 +87,7 @@ Enter your ProtonVPN credentials when prompted.
 ### Available Commands
 
 ```bash
-./privacy-manager.sh [COMMAND]
+./trace-protocol.sh [COMMAND]
 ```
 
 | Command | Description |
@@ -113,49 +113,53 @@ Enter your ProtonVPN credentials when prompted.
 
 ```bash
 # Install everything
-sudo ./privacy-manager.sh install
+sudo ./trace-protocol.sh install
 
 # Login to ProtonVPN
-./privacy-manager.sh vpn-login
+./trace-protocol.sh vpn-login
 
 # Connect to VPN
-./privacy-manager.sh vpn-connect
+./trace-protocol.sh vpn-connect
 
 # Enable kill switch for safety
-./privacy-manager.sh killswitch-on
+./trace-protocol.sh killswitch-on
 
 # Check everything is working
-./privacy-manager.sh monitor
+./trace-protocol.sh monitor
 ```
 
 #### Advanced Usage
 
 ```bash
 # Check VPN status only
-./privacy-manager.sh vpn-status
+./trace-protocol.sh vpn-status
 
 # Disconnect from VPN
-./privacy-manager.sh vpn-disconnect
+./trace-protocol.sh vpn-disconnect
 
 # Live monitoring (updates every 30 seconds)
-./privacy-manager.sh monitor-live
+./trace-protocol.sh monitor-live
 
 # Restart privacy services
-./privacy-manager.sh stop-services
-./privacy-manager.sh start-services
+./trace-protocol.sh stop-services
+./trace-protocol.sh start-services
 
 # Clean old logs
-./privacy-manager.sh clean-logs
+./trace-protocol.sh clean-logs
 ```
 
 ## 📁 Project Structure
 
 ```
 traceprotocol/
-├── privacy-manager.sh           # Main control script
+├── trace-protocol.sh           # Main control script
 ├── scripts/
 │   ├── install.sh              # Installation script
-│   └── monitor.sh              # Monitoring script
+│   ├── vpn-setup.sh            # VPN configuration
+│   ├── monitor.sh              # Monitoring script
+│   ├── mac-changer.sh          # MAC randomization
+│   ├── configure-ufw.sh        # Firewall configuration
+│   └── uninstall.sh            # Uninstaller
 ├── logs/                       # Log files directory
 ├── docs/                       # Documentation
 ├── privacy-tools.conf          # Configuration file (created after install)
@@ -196,7 +200,7 @@ traceprotocol/
 Prevents all network traffic if VPN disconnects, protecting against IP leaks.
 
 ```bash
-./privacy-manager.sh killswitch-on
+./trace-protocol.sh killswitch-on
 ```
 
 ### DNS Leak Protection
@@ -272,7 +276,7 @@ All operations are logged to the `logs/` directory:
 Clean old logs with:
 
 ```bash
-./privacy-manager.sh clean-logs
+./trace-protocol.sh clean-logs
 ```
 
 ## 🤝 Contributing
@@ -289,8 +293,8 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ### ProtonVPN won't connect
 
-1. Check login: `./privacy-manager.sh vpn-login`
-2. Check status: `./privacy-manager.sh vpn-status`
+1. Check login: `./trace-protocol.sh vpn-login`
+2. Check status: `./trace-protocol.sh vpn-status`
 3. Check logs: `tail -f logs/install_*.log`
 
 ### Services not starting
@@ -301,7 +305,7 @@ sudo systemctl status tor
 sudo systemctl status dnscrypt-proxy
 
 # Restart services
-./privacy-manager.sh start-services
+./trace-protocol.sh start-services
 ```
 
 ### Kill switch blocks internet
@@ -309,7 +313,7 @@ sudo systemctl status dnscrypt-proxy
 If kill switch is blocking your internet when VPN is off:
 
 ```bash
-./privacy-manager.sh killswitch-off
+./trace-protocol.sh killswitch-off
 ```
 
 ### Permission denied errors
@@ -317,7 +321,7 @@ If kill switch is blocking your internet when VPN is off:
 Make sure scripts are executable:
 
 ```bash
-chmod +x privacy-manager.sh
+chmod +x trace-protocol.sh
 chmod +x scripts/*.sh
 ```
 

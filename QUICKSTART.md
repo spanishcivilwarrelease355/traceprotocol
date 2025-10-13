@@ -7,7 +7,7 @@
 ### Step 1: Install Privacy Tools (with sudo)
 
 ```bash
-sudo ./privacy-manager.sh install
+sudo ./trace-protocol.sh install
 ```
 
 Wait 10-30 minutes for installation to complete. When prompted to configure ProtonVPN, answer **y**.
@@ -21,7 +21,7 @@ Wait 10-30 minutes for installation to complete. When prompted to configure Prot
 **Option B: After installation** (manual)
 ```bash
 # Run WITHOUT sudo!
-./privacy-manager.sh vpn-setup
+./trace-protocol.sh vpn-setup
 ```
 
 ## 🔐 VPN Setup Process
@@ -47,7 +47,7 @@ Answer: y
 ## ✅ Verify Installation
 
 ```bash
-./privacy-manager.sh monitor
+./trace-protocol.sh monitor
 ```
 
 ## 📊 Conky Widget
@@ -77,15 +77,15 @@ pkill conky && sleep 2 && conky -c ~/.conkyrc &
 
 | Command | What it does |
 |---------|-------------|
-| `./privacy-manager.sh install` | Install all privacy tools |
-| `./privacy-manager.sh vpn-connect` | Connect to fastest VPN server |
-| `./privacy-manager.sh vpn-disconnect` | Disconnect from VPN |
-| `./privacy-manager.sh vpn-status` | Show VPN connection details |
-| `./privacy-manager.sh monitor` | Full status check |
-| `./privacy-manager.sh monitor-live` | Live monitoring (updates every 30s) |
-| `./privacy-manager.sh killswitch-on` | Enable kill switch |
-| `./privacy-manager.sh killswitch-off` | Disable kill switch |
-| `./privacy-manager.sh help` | Show all commands |
+| `./trace-protocol.sh install` | Install all privacy tools |
+| `./trace-protocol.sh vpn-connect` | Connect to fastest VPN server |
+| `./trace-protocol.sh vpn-disconnect` | Disconnect from VPN |
+| `./trace-protocol.sh vpn-status` | Show VPN connection details |
+| `./trace-protocol.sh monitor` | Full status check |
+| `./trace-protocol.sh monitor-live` | Live monitoring (updates every 30s) |
+| `./trace-protocol.sh killswitch-on` | Enable kill switch |
+| `./trace-protocol.sh killswitch-off` | Disable kill switch |
+| `./trace-protocol.sh help` | Show all commands |
 
 ## 🛠️ Common Tasks
 
@@ -107,28 +107,28 @@ curl https://api.ipify.org
 
 ```bash
 # Disconnect VPN (with kill switch enabled)
-./privacy-manager.sh vpn-disconnect
+./trace-protocol.sh vpn-disconnect
 
 # Try to access internet (should fail)
 ping 8.8.8.8
 
 # Reconnect
-./privacy-manager.sh vpn-connect
+./trace-protocol.sh vpn-connect
 ```
 
 ### Manage Services
 
 ```bash
 # Start all privacy services
-./privacy-manager.sh start-services
+./trace-protocol.sh start-services
 
 # Stop privacy services
-./privacy-manager.sh stop-services
+./trace-protocol.sh stop-services
 ```
 
 ## 📁 Important Files
 
-- **Main Script**: `./privacy-manager.sh`
+- **Main Script**: `./trace-protocol.sh`
 - **Conky Config**: `~/.conkyrc`
 - **Logs**: `./logs/`
 - **Configuration**: `./privacy-tools.conf`
@@ -139,7 +139,7 @@ ping 8.8.8.8
 
 ```bash
 # Check login status
-./privacy-manager.sh vpn-login
+./trace-protocol.sh vpn-login
 
 # Try different server
 protonvpn-cli connect --random
@@ -157,8 +157,8 @@ conky -c ~/.conkyrc &
 
 ```bash
 # Restart all services
-./privacy-manager.sh stop-services
-./privacy-manager.sh start-services
+./trace-protocol.sh stop-services
+./trace-protocol.sh start-services
 ```
 
 ## 📚 Documentation
@@ -187,34 +187,34 @@ Edit `~/.conkyrc` to customize:
 ## 🔗 Quick Links
 
 - **Check VPN Status**: Look at Conky widget (top-right)
-- **Full Monitor**: Run `./privacy-manager.sh monitor`
-- **Help**: Run `./privacy-manager.sh help`
+- **Full Monitor**: Run `./trace-protocol.sh monitor`
+- **Help**: Run `./trace-protocol.sh help`
 
 ## 🎯 Daily Usage
 
 ```bash
 # Morning: Connect to VPN
-./privacy-manager.sh vpn-connect
+./trace-protocol.sh vpn-connect
 
 # Check status anytime
-./privacy-manager.sh monitor
+./trace-protocol.sh monitor
 
 # Evening: Disconnect (optional)
-./privacy-manager.sh vpn-disconnect
+./trace-protocol.sh vpn-disconnect
 ```
 
 ## 🚨 Emergency Commands
 
 ```bash
 # Kill switch blocking internet?
-./privacy-manager.sh killswitch-off
+./trace-protocol.sh killswitch-off
 
 # Conky using too much CPU?
 pkill conky
 
 # Need to reset everything?
-./privacy-manager.sh vpn-disconnect
-./privacy-manager.sh stop-services
+./trace-protocol.sh vpn-disconnect
+./trace-protocol.sh stop-services
 ```
 
 ## ✅ Verification Checklist

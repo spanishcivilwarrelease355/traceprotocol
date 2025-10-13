@@ -8,7 +8,7 @@
 
 ```
 traceprotocol/
-├── privacy-manager.sh              # Main control script
+├── trace-protocol.sh              # Main control script
 ├── scripts/
 │   ├── install.sh                 # Package installation (requires sudo)
 │   ├── vpn-setup.sh               # VPN configuration (NO sudo)
@@ -39,7 +39,7 @@ Widget Files (created during install):
 
 ### Step 1: Install Packages (with sudo)
 ```bash
-sudo ./privacy-manager.sh install
+sudo ./trace-protocol.sh install
 ```
 
 **What it does:**
@@ -51,7 +51,7 @@ sudo ./privacy-manager.sh install
 
 ### Step 2: Configure Privacy Features (WITHOUT sudo)
 ```bash
-./privacy-manager.sh vpn-setup
+./trace-protocol.sh vpn-setup
 ```
 
 **What it does:**
@@ -107,11 +107,11 @@ Displays in real-time:
 
 ### Main Commands
 ```bash
-sudo ./privacy-manager.sh install      # Install all packages
-./privacy-manager.sh vpn-setup         # Setup VPN (NO sudo!)
-./privacy-manager.sh monitor           # Check status
-./privacy-manager.sh monitor-live      # Live monitoring
-sudo ./privacy-manager.sh uninstall    # Remove everything
+sudo ./trace-protocol.sh install      # Install all packages
+./trace-protocol.sh vpn-setup         # Setup VPN (NO sudo!)
+./trace-protocol.sh monitor           # Check status
+./trace-protocol.sh monitor-live      # Live monitoring
+sudo ./trace-protocol.sh uninstall    # Remove everything
 ```
 
 ### VPN Commands
@@ -132,8 +132,8 @@ sudo ./scripts/mac-changer.sh restore      # Restore original MAC
 
 ### Service Commands
 ```bash
-./privacy-manager.sh start-services     # Start Tor, DNSCrypt
-./privacy-manager.sh stop-services      # Stop services
+./trace-protocol.sh start-services     # Start Tor, DNSCrypt
+./trace-protocol.sh stop-services      # Stop services
 sudo systemctl start tor                # Start Tor
 sudo systemctl start dnscrypt-proxy2    # Start DNSCrypt
 ```
@@ -220,7 +220,7 @@ Based on your latest monitor run:
 
 1. **Run VPN Setup** (WITHOUT sudo):
    ```bash
-   ./privacy-manager.sh vpn-setup
+   ./trace-protocol.sh vpn-setup
    ```
    - Enter username: `opxnel@proton.me`
    - Enter password
@@ -228,7 +228,7 @@ Based on your latest monitor run:
 
 2. **Verify Setup**:
    ```bash
-   ./privacy-manager.sh monitor
+   ./trace-protocol.sh monitor
    ```
    Should show:
    - ✅ VPN connected
@@ -280,7 +280,7 @@ sudo ./scripts/mac-changer.sh randomize
 - install.sh: ~485 lines
 - monitor.sh: ~276 lines
 - vpn-setup.sh: ~220 lines
-- privacy-manager.sh: ~369 lines
+- trace-protocol.sh: ~369 lines
 - mac-changer.sh: ~140 lines
 - Conky config: ~105 lines embedded
 

@@ -36,7 +36,7 @@ fi
 if ! command -v protonvpn-cli &>/dev/null; then
     echo -e "${RED}ProtonVPN CLI is not installed.${NC}"
     echo "Please run the main installation first:"
-    echo "  sudo ./privacy-manager.sh install"
+    echo "  sudo ./trace-protocol.sh install"
     exit 1
 fi
 
@@ -165,9 +165,9 @@ if [[ "$connect_vpn" =~ ^[Yy]$ ]]; then
             sudo ufw status verbose
             echo ""
             echo -e "${YELLOW}If some applications stop working:${NC}"
-            echo "  • Disable UFW: ./privacy-manager.sh firewall-off"
+            echo "  • Disable UFW: ./trace-protocol.sh firewall-off"
             echo "  • Check status: sudo ufw status"
-            echo "  • Reconfigure: ./privacy-manager.sh firewall-config"
+            echo "  • Reconfigure: ./trace-protocol.sh firewall-config"
         else
             echo ""
             echo -e "${YELLOW}⚠ Failed to enable firewall.${NC}"
@@ -180,7 +180,7 @@ if [[ "$connect_vpn" =~ ^[Yy]$ ]]; then
         echo -e "${YELLOW}Your VPN and kill switch still protect you,${NC}"
         echo "but UFW provides an additional security layer."
         echo ""
-        echo "Enable later with: ./privacy-manager.sh firewall-on"
+        echo "Enable later with: ./trace-protocol.sh firewall-on"
     fi
 else
     echo ""
@@ -229,7 +229,7 @@ echo -e "${YELLOW}Quick commands:${NC}"
 echo "  • Connect VPN:     protonvpn-cli c -f"
 echo "  • Disconnect:      protonvpn-cli d"
 echo "  • Status:          protonvpn-cli status"
-echo "  • Full monitor:    ./privacy-manager.sh monitor"
+echo "  • Full monitor:    ./trace-protocol.sh monitor"
 echo "  • Kill switch on:  protonvpn-cli ks --on"
 echo "  • Kill switch off: protonvpn-cli ks --off"
 echo "  • Enable firewall: sudo ufw enable"

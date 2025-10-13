@@ -59,6 +59,14 @@ ufw allow out 443      # HTTPS
 ufw allow out 853      # DNS over TLS
 ufw allow out 22       # SSH
 ufw allow out 21       # FTP
+ufw allow out 20       # FTP Data
+ufw allow out 25       # SMTP
+ufw allow out 587      # SMTP Submission
+ufw allow out 465      # SMTPS
+ufw allow out 993      # IMAPS
+ufw allow out 995      # POP3S
+ufw allow out 110      # POP3
+ufw allow out 143      # IMAP
 ufw allow out 9418     # Git
 ufw allow out 1194     # OpenVPN
 ufw allow out 5060     # ProtonVPN

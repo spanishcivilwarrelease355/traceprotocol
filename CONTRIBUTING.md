@@ -76,7 +76,7 @@ check_service() {
 Before submitting a PR:
 
 1. Test installation on fresh system (VM recommended)
-2. Test all commands in `privacy-manager.sh`
+2. Test all commands in `trace-protocol.sh`
 3. Verify monitor output is accurate
 4. Check for errors in log files
 5. Test on different distributions if possible

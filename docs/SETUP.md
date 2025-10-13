@@ -35,11 +35,11 @@ cd privacy-manager
 
 ```bash
 # Make scripts executable (if needed)
-chmod +x privacy-manager.sh
+chmod +x trace-protocol.sh
 chmod +x scripts/*.sh
 
 # Run installation (requires sudo)
-sudo ./privacy-manager.sh install
+sudo ./trace-protocol.sh install
 ```
 
 The installation will:
@@ -56,7 +56,7 @@ The installation will:
 
 ```bash
 # Login with your ProtonVPN credentials
-./privacy-manager.sh vpn-login
+./trace-protocol.sh vpn-login
 ```
 
 You'll be prompted for:
@@ -68,7 +68,7 @@ You'll be prompted for:
 
 ```bash
 # Connect to fastest server
-./privacy-manager.sh vpn-connect
+./trace-protocol.sh vpn-connect
 
 # Or manually choose server
 protonvpn-cli connect --cc US  # Connect to US
@@ -79,14 +79,14 @@ protonvpn-cli connect --sc     # Show server list
 
 ```bash
 # Enable kill switch (recommended)
-./privacy-manager.sh killswitch-on
+./trace-protocol.sh killswitch-on
 ```
 
 ### Step 6: Verify Installation
 
 ```bash
 # Check all services
-./privacy-manager.sh monitor
+./trace-protocol.sh monitor
 ```
 
 You should see:
@@ -161,7 +161,7 @@ sudo systemctl start protonvpn-autoconnect.service
 
 ```bash
 # Method 1: Using privacy-manager
-./privacy-manager.sh vpn-status
+./trace-protocol.sh vpn-status
 
 # Method 2: Using protonvpn-cli
 protonvpn-cli status
@@ -186,13 +186,13 @@ You should see:
 
 ```bash
 # Disconnect VPN while kill switch is enabled
-./privacy-manager.sh vpn-disconnect
+./trace-protocol.sh vpn-disconnect
 
 # Try to access internet (should fail)
 ping 8.8.8.8
 
 # Reconnect VPN
-./privacy-manager.sh vpn-connect
+./trace-protocol.sh vpn-connect
 ```
 
 ## Troubleshooting
@@ -208,14 +208,14 @@ sudo apt update
 sudo apt upgrade
 
 # Retry installation
-sudo ./privacy-manager.sh install
+sudo ./trace-protocol.sh install
 ```
 
 ### VPN Won't Connect
 
 ```bash
 # Check ProtonVPN login
-./privacy-manager.sh vpn-login
+./trace-protocol.sh vpn-login
 
 # Check network connectivity
 ping protonvpn.com
@@ -232,8 +232,8 @@ sudo systemctl status tor
 sudo systemctl status dnscrypt-proxy
 
 # Restart services
-./privacy-manager.sh stop-services
-./privacy-manager.sh start-services
+./trace-protocol.sh stop-services
+./trace-protocol.sh start-services
 
 # Check for errors
 journalctl -xe
@@ -243,7 +243,7 @@ journalctl -xe
 
 ```bash
 # Disable kill switch
-./privacy-manager.sh killswitch-off
+./trace-protocol.sh killswitch-off
 
 # Or manually
 protonvpn-cli ks --off
@@ -253,11 +253,11 @@ protonvpn-cli ks --off
 
 ```bash
 # Make scripts executable
-chmod +x privacy-manager.sh
+chmod +x trace-protocol.sh
 chmod +x scripts/*.sh
 
 # Run with sudo when needed
-sudo ./privacy-manager.sh install
+sudo ./trace-protocol.sh install
 ```
 
 ## Maintenance
@@ -276,7 +276,7 @@ sudo apt update && sudo apt install --only-upgrade proton-vpn-gnome-desktop
 
 ```bash
 # Clean logs older than 30 days
-./privacy-manager.sh clean-logs
+./trace-protocol.sh clean-logs
 
 # Manual cleanup
 find logs/ -name "*.log" -mtime +30 -delete
@@ -298,10 +298,10 @@ To remove all installed packages:
 
 ```bash
 # Disconnect VPN
-./privacy-manager.sh vpn-disconnect
+./trace-protocol.sh vpn-disconnect
 
 # Disable kill switch
-./privacy-manager.sh killswitch-off
+./trace-protocol.sh killswitch-off
 
 # Remove packages
 sudo apt remove --purge proton-vpn-gnome-desktop tor dnscrypt-proxy \

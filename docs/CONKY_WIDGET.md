@@ -283,9 +283,9 @@ Uptime: 5h 32m
 Time: 14:23:45  Date: 2025-10-13
 
 ━━━ QUICK ACTIONS ━━━
-• Connect VPN: ./privacy-manager.sh vpn-connect
-• Full Status: ./privacy-manager.sh monitor
-• Disconnect: ./privacy-manager.sh vpn-disconnect
+• Connect VPN: ./trace-protocol.sh vpn-connect
+• Full Status: ./trace-protocol.sh monitor
+• Disconnect: ./trace-protocol.sh vpn-disconnect
 
 TraceProtocol v1.0.0
 ```

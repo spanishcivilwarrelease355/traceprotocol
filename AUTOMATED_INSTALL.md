@@ -19,7 +19,7 @@ TraceProtocol now features **fully automated installation**! Everything happens 
 
 ```bash
 cd /home/isdevis/Desktop/privacy
-sudo ./privacy-manager.sh uninstall
+sudo ./trace-protocol.sh uninstall
 ```
 
 This will:
@@ -31,7 +31,7 @@ This will:
 ### Step 2: Run Automated Installation
 
 ```bash
-sudo ./privacy-manager.sh install
+sudo ./trace-protocol.sh install
 ```
 
 ### Step 3: Follow the Prompts
@@ -94,10 +94,10 @@ After installation completes:
 
 ```bash
 # 1. Uninstall everything
-sudo ./privacy-manager.sh uninstall
+sudo ./trace-protocol.sh uninstall
 
 # 2. Fresh install with automation
-sudo ./privacy-manager.sh install
+sudo ./trace-protocol.sh install
 
 # When prompted:
 # - Configure ProtonVPN? y
@@ -106,7 +106,7 @@ sudo ./privacy-manager.sh install
 # - Connect to VPN? y
 
 # 3. Verify installation
-./privacy-manager.sh monitor
+./trace-protocol.sh monitor
 
 # 4. Check Conky widget
 # Look at top-right corner of your screen
@@ -208,13 +208,13 @@ If you answer `n` to ProtonVPN configuration during installation:
 
 ```bash
 # Login to ProtonVPN
-./privacy-manager.sh vpn-login
+./trace-protocol.sh vpn-login
 
 # Connect to VPN
-./privacy-manager.sh vpn-connect
+./trace-protocol.sh vpn-connect
 
 # Enable kill switch
-./privacy-manager.sh killswitch-on
+./trace-protocol.sh killswitch-on
 
 # Start Conky widget
 conky -c ~/.conkyrc &
@@ -228,7 +228,7 @@ conky -c ~/.conkyrc &
 
 ### 2. Kill Switch Warning
 - When enabled, kill switch **blocks all internet** if VPN disconnects
-- To disable: `./privacy-manager.sh killswitch-off`
+- To disable: `./trace-protocol.sh killswitch-off`
 
 ### 3. Conky Widget
 - Appears in top-right corner
@@ -247,10 +247,10 @@ After installation, verify everything works:
 
 ```bash
 # 1. Check all services
-./privacy-manager.sh monitor
+./trace-protocol.sh monitor
 
 # 2. Verify VPN connection
-./privacy-manager.sh vpn-status
+./trace-protocol.sh vpn-status
 
 # 3. Check public IP (should be VPN IP)
 curl https://api.ipify.org
@@ -275,7 +275,7 @@ sudo apt update
 sudo apt upgrade
 
 # Retry installation
-sudo ./privacy-manager.sh install
+sudo ./trace-protocol.sh install
 ```
 
 ### VPN Not Connecting
@@ -285,10 +285,10 @@ sudo ./privacy-manager.sh install
 protonvpn-cli --version
 
 # Try manual login
-./privacy-manager.sh vpn-login
+./trace-protocol.sh vpn-login
 
 # Connect manually
-./privacy-manager.sh vpn-connect
+./trace-protocol.sh vpn-connect
 ```
 
 ### Conky Widget Not Showing
@@ -308,7 +308,7 @@ conky -C -c ~/.conkyrc
 
 ```bash
 # Disable kill switch
-./privacy-manager.sh killswitch-off
+./trace-protocol.sh killswitch-off
 
 # Or manually
 protonvpn-cli ks --off
@@ -334,7 +334,7 @@ After successful installation:
 
 1. **Check Status**
    ```bash
-   ./privacy-manager.sh monitor
+   ./trace-protocol.sh monitor
    ```
 
 2. **Test VPN Connection**
@@ -359,13 +359,13 @@ After successful installation:
 
 ```bash
 # Morning: Check status
-./privacy-manager.sh monitor
+./trace-protocol.sh monitor
 
 # If VPN disconnected
-./privacy-manager.sh vpn-connect
+./trace-protocol.sh vpn-connect
 
 # Evening: Optional disconnect
-./privacy-manager.sh vpn-disconnect
+./trace-protocol.sh vpn-disconnect
 ```
 
 ## 📚 Additional Resources

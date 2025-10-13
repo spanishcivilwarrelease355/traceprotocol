@@ -133,7 +133,7 @@ git push origin v1.0.0
    ```bash
    git clone https://github.com/YOUR_USERNAME/privacy-manager.git
    cd privacy-manager
-   sudo ./privacy-manager.sh install
+   sudo ./trace-protocol.sh install
    ```
    
    See [README.md](README.md) for full documentation.
@@ -214,8 +214,8 @@ jobs:
       - uses: actions/checkout@v2
       - name: Test Scripts
         run: |
-          chmod +x privacy-manager.sh
-          ./privacy-manager.sh help
+          chmod +x trace-protocol.sh
+          ./trace-protocol.sh help
 ```
 
 ## Documentation

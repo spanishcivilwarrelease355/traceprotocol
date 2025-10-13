@@ -40,7 +40,7 @@ Based on the monitor output:
 
 ```bash
 cd /home/isdevis/Desktop/privacy
-./privacy-manager.sh vpn-setup
+./trace-protocol.sh vpn-setup
 ```
 
 **This will:**
@@ -57,7 +57,7 @@ cd /home/isdevis/Desktop/privacy
 ### Step 2: Verify Everything Works
 
 ```bash
-./privacy-manager.sh monitor
+./trace-protocol.sh monitor
 ```
 
 **You should see:**
@@ -84,7 +84,7 @@ You should see:
 
 ```
 /home/isdevis/Desktop/privacy/
-├── privacy-manager.sh           # Main control script
+├── trace-protocol.sh           # Main control script
 ├── scripts/
 │   ├── install.sh              # Package installer
 │   ├── vpn-setup.sh            # VPN configurator  ← YOU NEED TO RUN THIS
@@ -100,9 +100,9 @@ You should see:
 
 ### Setup Commands:
 ```bash
-sudo ./privacy-manager.sh install   # Install packages (already done)
-./privacy-manager.sh vpn-setup      # Setup VPN (NEED TO RUN)
-sudo ./privacy-manager.sh uninstall # Remove everything
+sudo ./trace-protocol.sh install   # Install packages (already done)
+./trace-protocol.sh vpn-setup      # Setup VPN (NEED TO RUN)
+sudo ./trace-protocol.sh uninstall # Remove everything
 ```
 
 ### VPN Commands:
@@ -122,8 +122,8 @@ sudo ./scripts/mac-changer.sh restore     # Restore original
 
 ### Monitoring:
 ```bash
-./privacy-manager.sh monitor          # Full status check
-./privacy-manager.sh monitor-live     # Live monitoring
+./trace-protocol.sh monitor          # Full status check
+./trace-protocol.sh monitor-live     # Live monitoring
 ```
 
 ### Conky Widget:
@@ -183,7 +183,7 @@ See `docs/GITHUB_SETUP.md` for detailed instructions.
 Just run:
 
 ```bash
-./privacy-manager.sh vpn-setup
+./trace-protocol.sh vpn-setup
 ```
 
 Answer **y** to all prompts, and you'll have complete privacy protection! 🔒
@@ -201,7 +201,7 @@ All documentation is in the project:
 
 If you encounter issues:
 1. Check the logs: `ls -lt logs/`
-2. Run monitor: `./privacy-manager.sh monitor`
+2. Run monitor: `./trace-protocol.sh monitor`
 3. Check documentation: See files listed above
 4. Once on GitHub: Open an issue
 

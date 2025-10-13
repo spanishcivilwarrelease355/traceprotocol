@@ -13,7 +13,7 @@ TraceProtocol uses a **two-step installation** process to avoid ProtonVPN runnin
 
 ```bash
 cd /home/isdevis/Desktop/privacy
-sudo ./privacy-manager.sh install
+sudo ./trace-protocol.sh install
 ```
 
 **What happens:**
@@ -33,7 +33,7 @@ sudo ./privacy-manager.sh install
 ════════════════════════════════════════
 
 Please run the VPN setup first:
-  ./privacy-manager.sh vpn-setup
+  ./trace-protocol.sh vpn-setup
 
 After VPN setup is complete, you can reboot if needed.
 ```
@@ -43,7 +43,7 @@ After VPN setup is complete, you can reboot if needed.
 ### Step 2: Configure ProtonVPN (2-5 minutes)
 
 ```bash
-./privacy-manager.sh vpn-setup
+./trace-protocol.sh vpn-setup
 ```
 
 **⚠️ Run WITHOUT sudo - as your normal user!**
@@ -90,7 +90,7 @@ Check the top-right corner of your screen.
 ### Step 3: Verification
 
 ```bash
-./privacy-manager.sh monitor
+./trace-protocol.sh monitor
 ```
 
 You should see:
@@ -128,7 +128,7 @@ You should see:
 
 **Solution**: Run vpn-setup WITHOUT sudo:
 ```bash
-./privacy-manager.sh vpn-setup  # ← NO sudo!
+./trace-protocol.sh vpn-setup  # ← NO sudo!
 ```
 
 ### Issue 2: ProtonVPN Login Fails
@@ -166,8 +166,8 @@ cat ~/.conkyrc
 
 ## 📋 Installation Checklist
 
-- [ ] Step 1 completed: `sudo ./privacy-manager.sh install`
-- [ ] Step 2 completed: `./privacy-manager.sh vpn-setup` (NO sudo!)
+- [ ] Step 1 completed: `sudo ./trace-protocol.sh install`
+- [ ] Step 2 completed: `./trace-protocol.sh vpn-setup` (NO sudo!)
 - [ ] VPN connected and verified
 - [ ] Kill switch enabled
 - [ ] UFW firewall enabled
@@ -178,11 +178,11 @@ cat ~/.conkyrc
 
 | Task | Command | Needs sudo? |
 |------|---------|------------|
-| Install packages | `./privacy-manager.sh install` | ✅ YES |
-| Setup VPN | `./privacy-manager.sh vpn-setup` | ❌ NO |
+| Install packages | `./trace-protocol.sh install` | ✅ YES |
+| Setup VPN | `./trace-protocol.sh vpn-setup` | ❌ NO |
 | Connect VPN | `protonvpn-cli c -f` | ❌ NO |
 | Disconnect VPN | `protonvpn-cli d` | ❌ NO |
-| Check status | `./privacy-manager.sh monitor` | ❌ NO |
+| Check status | `./trace-protocol.sh monitor` | ❌ NO |
 | Enable firewall | `ufw enable` | ✅ YES |
 | Restart Conky | `pkill conky && conky -c ~/.conkyrc &` | ❌ NO |
 
@@ -192,18 +192,18 @@ To test from scratch:
 
 ```bash
 # 1. Uninstall everything (with sudo)
-sudo ./privacy-manager.sh uninstall
+sudo ./trace-protocol.sh uninstall
 
 # 2. Install packages (with sudo)
-sudo ./privacy-manager.sh install
+sudo ./trace-protocol.sh install
 # Wait for completion, read the message
 
 # 3. Setup VPN (WITHOUT sudo!)
-./privacy-manager.sh vpn-setup
+./trace-protocol.sh vpn-setup
 # Answer all prompts with 'y'
 
 # 4. Verify
-./privacy-manager.sh monitor
+./trace-protocol.sh monitor
 protonvpn-cli status
 ps aux | grep conky
 ```
@@ -261,7 +261,7 @@ TraceProtocol v1.0.0
 
 ```bash
 # Check everything
-./privacy-manager.sh monitor
+./trace-protocol.sh monitor
 
 # Connect VPN (if not connected)
 protonvpn-cli c -f

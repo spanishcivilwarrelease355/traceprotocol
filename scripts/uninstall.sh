@@ -170,6 +170,6 @@ echo "  Location: $SCRIPT_DIR/.."
 echo "  Status: Intact (only installed packages removed)"
 echo ""
 echo -e "${GREEN}You can reinstall anytime with:${NC}"
-echo "  sudo ./privacy-manager.sh install"
+echo "  sudo ./trace-protocol.sh install"
 echo ""
 

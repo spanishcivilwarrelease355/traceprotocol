@@ -152,6 +152,13 @@ ufw allow out 1194 >> "$LOG_FILE" 2>&1     # OpenVPN
 ufw allow out 5060 >> "$LOG_FILE" 2>&1     # ProtonVPN alt port
 ufw allow out 9418 >> "$LOG_FILE" 2>&1     # Git
 ufw allow out 22 >> "$LOG_FILE" 2>&1       # SSH
+ufw allow out 21 >> "$LOG_FILE" 2>&1       # FTP
+ufw allow out 20 >> "$LOG_FILE" 2>&1       # FTP Data
+ufw allow out 25 >> "$LOG_FILE" 2>&1       # SMTP
+ufw allow out 587 >> "$LOG_FILE" 2>&1      # SMTP Submission
+ufw allow out 465 >> "$LOG_FILE" 2>&1      # SMTPS
+ufw allow out 993 >> "$LOG_FILE" 2>&1      # IMAPS
+ufw allow out 995 >> "$LOG_FILE" 2>&1      # POP3S
 
 # Allow established connections
 ufw logging off >> "$LOG_FILE" 2>&1
@@ -433,7 +440,7 @@ if command -v protonvpn-cli &>/dev/null; then
     echo ""
     echo -e "${BLUE}After this installation completes, please run:${NC}"
     echo ""
-    echo -e "${GREEN}  ./privacy-manager.sh vpn-setup${NC}"
+    echo -e "${GREEN}  ./trace-protocol.sh vpn-setup${NC}"
     echo ""
     echo -e "${YELLOW}(WITHOUT sudo - as your normal user)${NC}"
     echo ""
@@ -496,7 +503,7 @@ echo ""
 echo -e "${YELLOW}⚠ NEXT STEP REQUIRED:${NC}"
 echo ""
 echo -e "${GREEN}Run the VPN setup (WITHOUT sudo):${NC}"
-echo "  ./privacy-manager.sh vpn-setup"
+echo "  ./trace-protocol.sh vpn-setup"
 echo ""
 echo "This will configure ProtonVPN, connect to VPN, and enable firewall."
 echo ""
@@ -508,9 +515,9 @@ echo "  ✓ Conky desktop widget"
 echo "  ✓ UFW firewall (configured, not yet enabled)"
 echo ""
 log_info "Quick commands:"
-echo "  • Setup VPN: ./privacy-manager.sh vpn-setup (NO sudo!)"
-echo "  • Check status: ./privacy-manager.sh monitor"
-echo "  • View all commands: ./privacy-manager.sh help"
+echo "  • Setup VPN: ./trace-protocol.sh vpn-setup (NO sudo!)"
+echo "  • Check status: ./trace-protocol.sh monitor"
+echo "  • View all commands: ./trace-protocol.sh help"
 echo ""
 log_info "Desktop Widget:"
 echo "  • Conky monitor is running in the top-right corner"
@@ -524,7 +531,7 @@ echo -e "${YELLOW}   DON'T REBOOT YET!${NC}"
 echo -e "${YELLOW}════════════════════════════════════════${NC}"
 echo ""
 echo "Please run the VPN setup first:"
-echo -e "${GREEN}  ./privacy-manager.sh vpn-setup${NC}"
+echo -e "${GREEN}  ./trace-protocol.sh vpn-setup${NC}"
 echo ""
 echo "After VPN setup is complete, you can reboot if needed."
 echo ""
