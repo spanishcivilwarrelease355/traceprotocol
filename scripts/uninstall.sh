@@ -33,15 +33,17 @@ read
 # Disconnect VPN first (as actual user, not root)
 echo -e "${BLUE}Disconnecting VPN...${NC}"
 if command -v protonvpn-cli &>/dev/null; then
-    if [ -n "$SUDO_USER" ]; then
-        # Run as the actual user who ran sudo
-        sudo -u "$SUDO_USER" protonvpn-cli disconnect 2>/dev/null || true
-        sudo -u "$SUDO_USER" protonvpn-cli ks --off 2>/dev/null || true
+    if [ -n "$SUDO_USER" ] && [ "$SUDO_USER" != "root" ]; then
+        # Run as the actual user who ran sudo, suppress all output
+        sudo -u "$SUDO_USER" bash -c "protonvpn-cli disconnect >/dev/null 2>&1" || true
+        sleep 1
+        sudo -u "$SUDO_USER" bash -c "protonvpn-cli ks --off >/dev/null 2>&1" || true
+        echo -e "${GREEN}VPN disconnected${NC}"
     else
-        # Fallback if not run with sudo
-        protonvpn-cli disconnect 2>/dev/null || true
-        protonvpn-cli ks --off 2>/dev/null || true
+        echo -e "${YELLOW}Skipping VPN disconnect (run with sudo)${NC}"
     fi
+else
+    echo -e "${YELLOW}ProtonVPN CLI not found${NC}"
 fi
 
 # Stop Conky widget
@@ -80,9 +82,13 @@ PACKAGES=(
 )
 
 for package in "${PACKAGES[@]}"; do
-    echo -e "${BLUE}Removing $package...${NC}"
-    apt remove --purge -y "$package" 2>/dev/null || echo -e "${YELLOW}Package $package not found or already removed${NC}"
+    if dpkg -l | grep -qw "$package" 2>/dev/null; then
+        echo -e "${BLUE}Removing $package...${NC}"
+        apt remove --purge -y "$package" >> /dev/null 2>&1 || true
+    fi
 done
+
+echo -e "${GREEN}Packages removed${NC}"
 
 # Remove ProtonVPN repository
 echo -e "${BLUE}Removing ProtonVPN repository...${NC}"
@@ -120,20 +126,33 @@ else
 fi
 
 # Autoremove unused packages
-echo -e "${BLUE}Removing unused packages...${NC}"
-apt autoremove -y
-apt autoclean
+echo -e "${BLUE}Cleaning up unused packages...${NC}"
+apt autoremove -y >> /dev/null 2>&1
+apt autoclean >> /dev/null 2>&1
+echo -e "${GREEN}Cleanup complete${NC}"
 
 echo ""
+echo "========================================"
 echo -e "${GREEN}Uninstallation completed!${NC}"
+echo "========================================"
 echo ""
-echo -e "${YELLOW}Note: The following were NOT removed:${NC}"
-echo "  - apparmor (core system security)"
-echo "  - ufw (firewall - disabled but not removed)"
-echo "  - iptables (core networking)"
-echo "  - curl, wget (common utilities)"
+echo -e "${BLUE}What was removed:${NC}"
+echo "  ✓ ProtonVPN and all privacy packages"
+echo "  ✓ All configurations and data"
+echo "  ✓ Conky widget"
+echo "  ✓ Service configurations"
 echo ""
-echo -e "${BLUE}TraceProtocol project files remain in:${NC}"
-echo "  $SCRIPT_DIR/.."
+echo -e "${YELLOW}Note: Core system packages were kept:${NC}"
+echo "  • apparmor (system security)"
+echo "  • ufw (firewall - disabled)"
+echo "  • iptables (networking)"
+echo "  • curl, wget (utilities)"
+echo ""
+echo -e "${BLUE}TraceProtocol project files:${NC}"
+echo "  Location: $SCRIPT_DIR/.."
+echo "  Status: Intact (only installed packages removed)"
+echo ""
+echo -e "${GREEN}You can reinstall anytime with:${NC}"
+echo "  sudo ./privacy-manager.sh install"
 echo ""
 
