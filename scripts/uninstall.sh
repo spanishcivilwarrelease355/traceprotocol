@@ -43,11 +43,11 @@ if command -v protonvpn-cli &>/dev/null; then
         pkill -9 protonvpn 2>/dev/null || true
         
         # Disable kill switch first (with timeout and environment)
-        timeout 5 sudo -u "$SUDO_USER" DBUS_SESSION_BUS_ADDRESS="$DBUS_ADDR" HOME="$USER_HOME" protonvpn-cli ks --off >/dev/null 2>&1 || true
+        timeout 5 bash -c "echo 'y' | sudo -u '$SUDO_USER' DBUS_SESSION_BUS_ADDRESS='$DBUS_ADDR' HOME='$USER_HOME' protonvpn-cli ks --off" >/dev/null 2>&1 || true
         sleep 1
         
         # Force disconnect with timeout
-        timeout 5 sudo -u "$SUDO_USER" DBUS_SESSION_BUS_ADDRESS="$DBUS_ADDR" HOME="$USER_HOME" protonvpn-cli d >/dev/null 2>&1 || true
+        timeout 5 bash -c "echo 'y' | sudo -u '$SUDO_USER' DBUS_SESSION_BUS_ADDRESS='$DBUS_ADDR' HOME='$USER_HOME' protonvpn-cli d" >/dev/null 2>&1 || true
         
         # If still connected, kill OpenVPN processes
         pkill -9 openvpn 2>/dev/null || true

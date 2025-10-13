@@ -400,7 +400,8 @@ if command -v protonvpn-cli &>/dev/null; then
                 fi
                 
                 # Login to ProtonVPN as the actual user with proper environment
-                if sudo -u "$SUDO_USER" DBUS_SESSION_BUS_ADDRESS="$DBUS_ADDR" HOME="$USER_HOME" protonvpn-cli login "$pvpn_username"; then
+                # Automatically answer 'y' to the "Running as root" warning
+                if echo "y" | sudo -u "$SUDO_USER" DBUS_SESSION_BUS_ADDRESS="$DBUS_ADDR" HOME="$USER_HOME" protonvpn-cli login "$pvpn_username"; then
                     log "${GREEN}ProtonVPN login successful!${NC}"
                     echo ""
                     
@@ -410,7 +411,7 @@ if command -v protonvpn-cli &>/dev/null; then
                     
                     if [[ "$enable_ks" =~ ^[Yy]$ ]]; then
                         log "Enabling kill switch..."
-                        if sudo -u "$SUDO_USER" DBUS_SESSION_BUS_ADDRESS="$DBUS_ADDR" HOME="$USER_HOME" protonvpn-cli ks --on >> "$LOG_FILE" 2>&1; then
+                        if echo "y" | sudo -u "$SUDO_USER" DBUS_SESSION_BUS_ADDRESS="$DBUS_ADDR" HOME="$USER_HOME" protonvpn-cli ks --on >> "$LOG_FILE" 2>&1; then
                             log "${GREEN}Kill switch enabled!${NC}"
                         else
                             log_warn "Kill switch activation failed (you can enable it later)"
@@ -429,17 +430,17 @@ if command -v protonvpn-cli &>/dev/null; then
                         echo ""
                         
                         # Connect as user with -f flag (fastest)
-                        if sudo -u "$SUDO_USER" DBUS_SESSION_BUS_ADDRESS="$DBUS_ADDR" HOME="$USER_HOME" protonvpn-cli c -f; then
+                        if echo "y" | sudo -u "$SUDO_USER" DBUS_SESSION_BUS_ADDRESS="$DBUS_ADDR" HOME="$USER_HOME" protonvpn-cli c -f; then
                             sleep 3
                             
                             # Check if actually connected
-                            if sudo -u "$SUDO_USER" DBUS_SESSION_BUS_ADDRESS="$DBUS_ADDR" HOME="$USER_HOME" protonvpn-cli status 2>/dev/null | grep -qi "connected"; then
+                            if echo "y" | sudo -u "$SUDO_USER" DBUS_SESSION_BUS_ADDRESS="$DBUS_ADDR" HOME="$USER_HOME" protonvpn-cli status 2>/dev/null | grep -qi "connected"; then
                                 log "${GREEN}VPN connected successfully!${NC}"
                                 echo ""
                                 
                                 # Show connection status
                                 log_info "Current VPN Status:"
-                                sudo -u "$SUDO_USER" DBUS_SESSION_BUS_ADDRESS="$DBUS_ADDR" HOME="$USER_HOME" protonvpn-cli status
+                                echo "y" | sudo -u "$SUDO_USER" DBUS_SESSION_BUS_ADDRESS="$DBUS_ADDR" HOME="$USER_HOME" protonvpn-cli status
                                 echo ""
                             else
                                 log_error "VPN connection failed. Please check your connection."
