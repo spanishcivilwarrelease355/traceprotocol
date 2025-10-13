@@ -201,7 +201,7 @@ main() {
     
     # Package Checks
     echo -e "${CYAN}━━━ Package Status ━━━${NC}"
-check_package "proton-vpn-gnome-desktop" "ProtonVPN"
+check_package "protonvpn-cli" "ProtonVPN CLI"
 check_package "tor" "Tor"
 # Check for either dnscrypt-proxy or dnscrypt-proxy2
 if dpkg -l | grep -qw "dnscrypt-proxy2" 2>/dev/null; then

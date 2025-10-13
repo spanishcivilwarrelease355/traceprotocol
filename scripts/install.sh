@@ -60,11 +60,11 @@ log "Starting installation process..."
 log "Updating system packages..."
 
 # Update package list
-apt-get update -qq >> "$LOG_FILE" 2>&1
+apt update -qq >> "$LOG_FILE" 2>&1
 
 # Use 'yes' to automatically answer prompts and upgrade
 log "Upgrading packages (this may take a while)..."
-yes | apt-get upgrade -y -qq -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" >> "$LOG_FILE" 2>&1 || true
+yes | apt upgrade -y -qq -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" >> "$LOG_FILE" 2>&1 || true
 
 log "System update completed"
 
@@ -91,7 +91,7 @@ PACKAGES=(
 
 for package in "${PACKAGES[@]}"; do
     log_info "Installing $package..."
-    apt-get install -y -qq "$package" >> "$LOG_FILE" 2>&1 || log_warn "Failed to install $package"
+    apt install -y -qq "$package" >> "$LOG_FILE" 2>&1 || log_warn "Failed to install $package"
 done
 
 log "Base packages installation completed"
@@ -101,7 +101,7 @@ log "Setting up ProtonVPN CLI..."
 
 # Install dependencies
 log_info "Installing ProtonVPN dependencies..."
-apt-get install -y -qq gnupg2 apt-transport-https ca-certificates >> "$LOG_FILE" 2>&1
+apt install -y -qq gnupg2 apt-transport-https ca-certificates >> "$LOG_FILE" 2>&1
 
 # Download and import ProtonVPN GPG key
 log_info "Adding ProtonVPN GPG key..."
@@ -115,12 +115,11 @@ echo "deb [signed-by=/usr/share/keyrings/protonvpn-stable-archive-keyring.gpg] h
 
 # Update package list
 log_info "Updating package list..."
-apt-get update -qq >> "$LOG_FILE" 2>&1
+apt update -qq >> "$LOG_FILE" 2>&1
 
-# Install ProtonVPN packages
-log_info "Installing ProtonVPN packages..."
-apt-get install -y -qq proton-vpn-gnome-desktop >> "$LOG_FILE" 2>&1
-apt-get install -y -qq libayatana-appindicator3-1 gir1.2-ayatanaappindicator3-0.1 gnome-shell-extension-appindicator >> "$LOG_FILE" 2>&1 || log_warn "Some GUI packages failed to install (normal on non-GNOME systems)"
+# Install ProtonVPN CLI
+log_info "Installing ProtonVPN CLI..."
+apt install -y -qq protonvpn-cli >> "$LOG_FILE" 2>&1
 
 log "ProtonVPN CLI installed successfully"
 
@@ -152,7 +151,7 @@ log "AppArmor enabled and started"
 
 # --- Step 8: Install Secure Messaging Apps ---
 log "Installing secure messaging applications..."
-apt-get install -y -qq signal-desktop telegram-desktop >> "$LOG_FILE" 2>&1 || log_warn "Some messaging apps failed to install (check repositories)"
+apt install -y -qq signal-desktop telegram-desktop >> "$LOG_FILE" 2>&1 || log_warn "Some messaging apps failed to install (check repositories)"
 
 # --- Step 9: Configure MAC Address Randomization ---
 log "Configuring MAC address randomization..."
@@ -352,8 +351,8 @@ fi
 
 # --- Cleanup ---
 log "Running cleanup..."
-apt-get autoremove -y -qq >> "$LOG_FILE" 2>&1
-apt-get clean -qq >> "$LOG_FILE" 2>&1
+apt autoremove -y -qq >> "$LOG_FILE" 2>&1
+apt clean -qq >> "$LOG_FILE" 2>&1
 
 # --- Step 12: Automatic ProtonVPN Setup ---
 echo ""

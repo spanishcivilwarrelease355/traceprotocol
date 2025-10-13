@@ -76,10 +76,8 @@ ufw disable 2>/dev/null || true
 echo -e "${BLUE}Removing packages...${NC}"
 
 PACKAGES=(
-    "proton-vpn-gnome-desktop"
-    "libayatana-appindicator3-1"
-    "gir1.2-ayatanaappindicator3-0.1"
-    "gnome-shell-extension-appindicator"
+    "protonvpn-cli"
+    "protonvpn"
     "tor"
     "dnscrypt-proxy"
     "dnscrypt-proxy2"
@@ -91,6 +89,7 @@ PACKAGES=(
     "torbrowser-launcher"
     "signal-desktop"
     "telegram-desktop"
+    "conky-all"
 )
 
 for package in "${PACKAGES[@]}"; do
