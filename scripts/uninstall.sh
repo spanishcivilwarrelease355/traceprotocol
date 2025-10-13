@@ -12,6 +12,7 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
+CYAN='\033[0;36m'
 NC='\033[0m'
 
 show_banner() {
@@ -37,11 +38,21 @@ EOF
     echo -e "${NC}"
 }
 
-# Check if running as root
+# Check if running as root FIRST (before banner)
 if [[ $EUID -ne 0 ]]; then
-    echo -e "${RED}This script must be run as root or with sudo${NC}"
+    echo ""
+    echo -e "${RED}╔════════════════════════════════════════════════╗${NC}"
+    echo -e "${RED}║  ERROR: This script requires sudo privileges!  ║${NC}"
+    echo -e "${RED}╚════════════════════════════════════════════════╝${NC}"
+    echo ""
+    echo -e "${YELLOW}Please run:${NC}"
+    echo -e "  ${GREEN}sudo ./trace-protocol.sh uninstall${NC}"
+    echo ""
     exit 1
 fi
+
+# Show banner
+show_banner
 
 echo -e "${YELLOW}WARNING: This will remove all TraceProtocol packages and configurations!${NC}"
 echo -e "${YELLOW}Press Ctrl+C to cancel, or Enter to continue...${NC}"
@@ -49,41 +60,41 @@ read
 
 # Disconnect VPN first (as actual user, not root)
 echo -e "${BLUE}Checking VPN connection...${NC}"
-if command -v protonvpn-cli &>/dev/null; then
+
+# Check if proton0 interface exists (quick check)
+if ip link show proton0 >/dev/null 2>&1; then
+    echo -e "${YELLOW}VPN tunnel detected. Disconnecting...${NC}"
+    
     if [ -n "$SUDO_USER" ] && [ "$SUDO_USER" != "root" ]; then
         # Get user environment
         USER_HOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
         USER_UID=$(id -u "$SUDO_USER")
         DBUS_ADDR="unix:path=/run/user/$USER_UID/bus"
         
-        # Check if VPN is actually connected
-        VPN_STATUS=$(sudo -u "$SUDO_USER" DBUS_SESSION_BUS_ADDRESS="$DBUS_ADDR" HOME="$USER_HOME" protonvpn-cli status 2>/dev/null || echo "not connected")
+        # Kill any existing ProtonVPN processes first
+        pkill -9 protonvpn 2>/dev/null || true
         
-        if echo "$VPN_STATUS" | grep -q "Server:"; then
-            echo -e "${YELLOW}VPN is connected. Disconnecting...${NC}"
-            
-            # Kill any existing ProtonVPN processes first
-            pkill -9 protonvpn 2>/dev/null || true
-            
-            # Disable kill switch first (with timeout and environment)
-            timeout 5 sudo -u "$SUDO_USER" DBUS_SESSION_BUS_ADDRESS="$DBUS_ADDR" HOME="$USER_HOME" protonvpn-cli ks --off >/dev/null 2>&1 || true
-            sleep 1
-            
-            # Force disconnect with timeout
-            timeout 5 sudo -u "$SUDO_USER" DBUS_SESSION_BUS_ADDRESS="$DBUS_ADDR" HOME="$USER_HOME" protonvpn-cli d >/dev/null 2>&1 || true
-            
-            # If still connected, kill OpenVPN processes
-            pkill -9 openvpn 2>/dev/null || true
-            
-            echo -e "${GREEN}VPN disconnected${NC}"
-        else
-            echo -e "${BLUE}VPN is not connected. Skipping disconnect.${NC}"
-        fi
+        # Disable kill switch first (with timeout and environment)
+        timeout 3 sudo -u "$SUDO_USER" DBUS_SESSION_BUS_ADDRESS="$DBUS_ADDR" HOME="$USER_HOME" protonvpn-cli ks --off >/dev/null 2>&1 || true
+        
+        # Force disconnect with timeout
+        timeout 3 sudo -u "$SUDO_USER" DBUS_SESSION_BUS_ADDRESS="$DBUS_ADDR" HOME="$USER_HOME" protonvpn-cli d >/dev/null 2>&1 || true
+        
+        # If still connected, kill OpenVPN processes
+        pkill -9 openvpn 2>/dev/null || true
+        
+        # Remove VPN interface
+        ip link delete proton0 2>/dev/null || true
+        
+        echo -e "${GREEN}VPN disconnected${NC}"
     else
-        echo -e "${YELLOW}Skipping VPN disconnect (run with sudo)${NC}"
+        # Kill OpenVPN and remove interface anyway
+        pkill -9 openvpn 2>/dev/null || true
+        ip link delete proton0 2>/dev/null || true
+        echo -e "${GREEN}VPN tunnel removed${NC}"
     fi
 else
-    echo -e "${YELLOW}ProtonVPN CLI not found${NC}"
+    echo -e "${BLUE}No VPN connection detected. Skipping disconnect.${NC}"
 fi
 
 # Stop Conky widget
