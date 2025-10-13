@@ -92,8 +92,6 @@ PACKAGES=(
     "firejail"
     "dnsmasq"
     "torbrowser-launcher"
-    "signal-desktop"
-    "telegram-desktop"
     "conky-all"
 )
 
