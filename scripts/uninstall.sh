@@ -34,15 +34,20 @@ read
 echo -e "${BLUE}Disconnecting VPN...${NC}"
 if command -v protonvpn-cli &>/dev/null; then
     if [ -n "$SUDO_USER" ] && [ "$SUDO_USER" != "root" ]; then
+        # Get user environment
+        USER_HOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
+        USER_UID=$(id -u "$SUDO_USER")
+        DBUS_ADDR="unix:path=/run/user/$USER_UID/bus"
+        
         # Kill any existing ProtonVPN processes first
         pkill -9 protonvpn 2>/dev/null || true
         
-        # Disable kill switch first (with timeout)
-        timeout 5 sudo -u "$SUDO_USER" bash -c "protonvpn-cli ks --off" >/dev/null 2>&1 || true
+        # Disable kill switch first (with timeout and environment)
+        timeout 5 sudo -u "$SUDO_USER" DBUS_SESSION_BUS_ADDRESS="$DBUS_ADDR" HOME="$USER_HOME" protonvpn-cli ks --off >/dev/null 2>&1 || true
         sleep 1
         
         # Force disconnect with timeout
-        timeout 5 sudo -u "$SUDO_USER" bash -c "protonvpn-cli disconnect" >/dev/null 2>&1 || true
+        timeout 5 sudo -u "$SUDO_USER" DBUS_SESSION_BUS_ADDRESS="$DBUS_ADDR" HOME="$USER_HOME" protonvpn-cli d >/dev/null 2>&1 || true
         
         # If still connected, kill OpenVPN processes
         pkill -9 openvpn 2>/dev/null || true
