@@ -2,27 +2,51 @@
 
 ⚡ Get up and running with TraceProtocol in 5 minutes!
 
-## 🚀 Installation (One Command)
+## 🚀 Two-Step Installation
+
+### Step 1: Install Privacy Tools (with sudo)
 
 ```bash
 sudo ./privacy-manager.sh install
 ```
 
-Wait 10-30 minutes for installation to complete.
+Wait 10-30 minutes for installation to complete. When prompted to configure ProtonVPN, answer **y**.
 
-## 🔐 Initial Setup
+### Step 2: ProtonVPN Setup (runs automatically OR manually)
+
+**Option A: During installation** (automatic)
+- The installer will call vpn-setup.sh automatically as your normal user
+- Just answer the prompts
+
+**Option B: After installation** (manual)
+```bash
+# Run WITHOUT sudo!
+./privacy-manager.sh vpn-setup
+```
+
+## 🔐 VPN Setup Process
+
+When you run vpn-setup (automatically or manually):
 
 ```bash
-# 1. Login to ProtonVPN
-./privacy-manager.sh vpn-login
+# 1. Enter your ProtonVPN username
+Username: your_username@proton.me
 
-# 2. Connect to VPN
-./privacy-manager.sh vpn-connect
+# 2. Enter your password (when prompted)
+Password: ********
 
-# 3. Enable Kill Switch
-./privacy-manager.sh killswitch-on
+# 3. Connect to VPN (when asked)
+Answer: y
 
-# 4. Check Everything
+# 4. Enable Kill Switch (when asked)
+Answer: y
+
+# 5. Done!
+```
+
+## ✅ Verify Installation
+
+```bash
 ./privacy-manager.sh monitor
 ```
 
