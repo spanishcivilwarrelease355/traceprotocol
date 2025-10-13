@@ -162,8 +162,6 @@ PACKAGES=(
     "protonvpn-cli"
     "protonvpn"
     "tor"
-    "dnscrypt-proxy"
-    "dnscrypt-proxy2"
     "macchanger"
     "apparmor-utils"
     "bleachbit"
