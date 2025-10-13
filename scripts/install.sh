@@ -26,27 +26,28 @@ NC='\033[0m' # No Color
 TOTAL_STEPS=13
 CURRENT_STEP=0
 
-# Function to show progress bar
+# Function to show dynamic progress bar (updates in place)
 show_progress() {
     local step=$1
     local total=$2
     local description=$3
     
     local percent=$((step * 100 / total))
-    local filled=$((step * 50 / total))
-    local empty=$((50 - filled))
+    local filled=$((step * 40 / total))
+    local empty=$((40 - filled))
     
     # Create progress bar
-    local bar=""
+    local bar="["
     for ((i=0; i<filled; i++)); do bar="${bar}█"; done
     for ((i=0; i<empty; i++)); do bar="${bar}░"; done
+    bar="${bar}]"
     
-    echo ""
-    echo -e "${CYAN}╔════════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${CYAN}║${NC} Step ${step}/${total} - ${percent}% Complete $(printf '%54s' '') ${CYAN}║${NC}"
-    echo -e "${CYAN}║${NC} ${bar} ${CYAN}║${NC}"
-    echo -e "${CYAN}║${NC} ${description}$(printf '%*s' $((62-${#description})) '') ${CYAN}║${NC}"
-    echo -e "${CYAN}╚════════════════════════════════════════════════════════════════╝${NC}"
+    # Print with carriage return to update same line (clear rest of line with spaces)
+    printf "\r${CYAN}Progress:${NC} ${bar} ${YELLOW}%3d%%${NC} - %-40s" "$percent" "$description..."
+}
+
+# Function to finish progress (move to new line)
+finish_progress() {
     echo ""
 }
 
@@ -101,26 +102,29 @@ EOF
 }
 
 
-log "Starting installation process..."
+echo ""
+echo -e "${CYAN}Starting installation process...${NC}"
+echo ""
 
 # --- Step 1: System Update ---
 CURRENT_STEP=1
 show_progress $CURRENT_STEP $TOTAL_STEPS "Updating system packages"
-log "Updating system packages..."
+echo "[$(date +%Y-%m-%d\ %H:%M:%S)] Updating system packages..." >> "$LOG_FILE"
 
 # Update package list
 apt update -qq >> "$LOG_FILE" 2>&1
 
 # Use 'yes' to automatically answer prompts and upgrade
-log "Upgrading packages (this may take a while)..."
+echo "[$(date +%Y-%m-%d\ %H:%M:%S)] Upgrading packages (this may take a while)..." >> "$LOG_FILE"
 yes | apt upgrade -y -qq -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" >> "$LOG_FILE" 2>&1 || true
 
-log "System update completed"
+echo "[$(date +%Y-%m-%d\ %H:%M:%S)] System update completed" >> "$LOG_FILE"
+sleep 0.5
 
 # --- Step 2: Install Base Privacy Tools ---
 CURRENT_STEP=2
-show_progress $CURRENT_STEP $TOTAL_STEPS "Installing base privacy and security packages"
-log "Installing base privacy and security packages..."
+show_progress $CURRENT_STEP $TOTAL_STEPS "Installing base privacy packages"
+echo "[$(date +%Y-%m-%d\ %H:%M:%S)] Installing base privacy and security packages..." >> "$LOG_FILE"
 PACKAGES=(
     "tor"
     "macchanger"
@@ -140,33 +144,34 @@ PACKAGES=(
 )
 
 for package in "${PACKAGES[@]}"; do
-    log_info "Installing $package..."
-    apt install -y -qq "$package" >> "$LOG_FILE" 2>&1 || log_warn "Failed to install $package"
+    echo "[$(date +%Y-%m-%d\ %H:%M:%S)] INFO: Installing $package..." >> "$LOG_FILE"
+    apt install -y -qq "$package" >> "$LOG_FILE" 2>&1 || echo "[$(date +%Y-%m-%d\ %H:%M:%S)] WARNING: Failed to install $package" >> "$LOG_FILE"
 done
 
-log "Base packages installation completed"
+echo "[$(date +%Y-%m-%d\ %H:%M:%S)] Base packages installation completed" >> "$LOG_FILE"
+sleep 0.5
 
-# --- Step 2b: Install DNSCrypt-Proxy from GitHub ---
+# --- Step 3: Install DNSCrypt-Proxy from GitHub ---
 CURRENT_STEP=3
-show_progress $CURRENT_STEP $TOTAL_STEPS "Installing DNSCrypt-Proxy from GitHub"
-log "Installing DNSCrypt-Proxy from GitHub..."
+show_progress $CURRENT_STEP $TOTAL_STEPS "Installing DNSCrypt-Proxy"
+echo "[$(date +%Y-%m-%d\ %H:%M:%S)] Installing DNSCrypt-Proxy from GitHub..." >> "$LOG_FILE"
 
 DNSCRYPT_VERSION="2.1.5"
 DNSCRYPT_ARCH="linux_x86_64"
 DNSCRYPT_URL="https://github.com/DNSCrypt/dnscrypt-proxy/releases/download/${DNSCRYPT_VERSION}/dnscrypt-proxy-${DNSCRYPT_ARCH}-${DNSCRYPT_VERSION}.tar.gz"
 
-log_info "Downloading DNSCrypt-Proxy ${DNSCRYPT_VERSION}..."
+echo "[$(date +%Y-%m-%d\ %H:%M:%S)] INFO: Downloading DNSCrypt-Proxy ${DNSCRYPT_VERSION}..." >> "$LOG_FILE"
 cd /tmp
 wget -q "$DNSCRYPT_URL" -O dnscrypt-proxy.tar.gz
 
 if [ -f dnscrypt-proxy.tar.gz ]; then
-    log_info "Extracting DNSCrypt-Proxy..."
+    echo "[$(date +%Y-%m-%d\ %H:%M:%S)] INFO: Extracting DNSCrypt-Proxy..." >> "$LOG_FILE"
     tar -xzf dnscrypt-proxy.tar.gz
     
     cd linux-x86_64
     
     # Install binary
-    log_info "Installing DNSCrypt-Proxy binary..."
+    echo "[$(date +%Y-%m-%d\ %H:%M:%S)] INFO: Installing DNSCrypt-Proxy binary..." >> "$LOG_FILE"
     cp -f dnscrypt-proxy /usr/local/bin/
     chmod +x /usr/local/bin/dnscrypt-proxy
     
@@ -177,7 +182,7 @@ if [ -f dnscrypt-proxy.tar.gz ]; then
     cp -f example-dnscrypt-proxy.toml /etc/dnscrypt-proxy/dnscrypt-proxy.toml
     
     # Create systemd service
-    log_info "Creating DNSCrypt-Proxy systemd service..."
+    echo "[$(date +%Y-%m-%d\ %H:%M:%S)] INFO: Creating DNSCrypt-Proxy systemd service..." >> "$LOG_FILE"
     cat > /etc/systemd/system/dnscrypt-proxy.service << 'DNSCRYPTEOF'
 [Unit]
 Description=DNSCrypt-Proxy
@@ -205,67 +210,71 @@ DNSCRYPTEOF
     # Reload systemd
     systemctl daemon-reload
     
-    log "${GREEN}DNSCrypt-Proxy installed successfully from GitHub!${NC}"
+    echo "[$(date +%Y-%m-%d\ %H:%M:%S)] DNSCrypt-Proxy installed successfully from GitHub!" >> "$LOG_FILE"
 else
-    log_warn "Failed to download DNSCrypt-Proxy. Skipping..."
+    echo "[$(date +%Y-%m-%d\ %H:%M:%S)] WARNING: Failed to download DNSCrypt-Proxy. Skipping..." >> "$LOG_FILE"
 fi
+sleep 0.5
 
 # --- Step 4: Install ProtonVPN CLI ---
 CURRENT_STEP=4
 show_progress $CURRENT_STEP $TOTAL_STEPS "Installing ProtonVPN CLI"
-log "Setting up ProtonVPN CLI..."
+echo "[$(date +%Y-%m-%d\ %H:%M:%S)] Setting up ProtonVPN CLI..." >> "$LOG_FILE"
 
 # Install dependencies
-log_info "Installing ProtonVPN dependencies..."
+echo "[$(date +%Y-%m-%d\ %H:%M:%S)] INFO: Installing ProtonVPN dependencies..." >> "$LOG_FILE"
 apt install -y -qq gnupg2 apt-transport-https ca-certificates >> "$LOG_FILE" 2>&1
 
 # Download and import ProtonVPN GPG key
-log_info "Adding ProtonVPN GPG key..."
+echo "[$(date +%Y-%m-%d\ %H:%M:%S)] INFO: Adding ProtonVPN GPG key..." >> "$LOG_FILE"
 wget -qO /tmp/protonvpn_signing_key.asc https://repo.protonvpn.com/debian/public_key.asc
 gpg --dearmor < /tmp/protonvpn_signing_key.asc > /usr/share/keyrings/protonvpn-stable-archive-keyring.gpg
 rm -f /tmp/protonvpn_signing_key.asc
 
 # Add ProtonVPN repository
-log_info "Adding ProtonVPN repository..."
+echo "[$(date +%Y-%m-%d\ %H:%M:%S)] INFO: Adding ProtonVPN repository..." >> "$LOG_FILE"
 echo "deb [signed-by=/usr/share/keyrings/protonvpn-stable-archive-keyring.gpg] https://repo.protonvpn.com/debian stable main" > /etc/apt/sources.list.d/protonvpn.list
 
 # Update package list
-log_info "Updating package list..."
+echo "[$(date +%Y-%m-%d\ %H:%M:%S)] INFO: Updating package list..." >> "$LOG_FILE"
 apt update -qq >> "$LOG_FILE" 2>&1
 
 # Install ProtonVPN CLI
-log_info "Installing ProtonVPN CLI..."
+echo "[$(date +%Y-%m-%d\ %H:%M:%S)] INFO: Installing ProtonVPN CLI..." >> "$LOG_FILE"
 apt install -y -qq protonvpn-cli >> "$LOG_FILE" 2>&1
 
-log "ProtonVPN CLI installed successfully"
+echo "[$(date +%Y-%m-%d\ %H:%M:%S)] ProtonVPN CLI installed successfully" >> "$LOG_FILE"
+sleep 0.5
 
 # --- Step 5: Configure Tor ---
 CURRENT_STEP=5
 show_progress $CURRENT_STEP $TOTAL_STEPS "Configuring Tor service"
-log "Configuring Tor service..."
+echo "[$(date +%Y-%m-%d\ %H:%M:%S)] Configuring Tor service..." >> "$LOG_FILE"
 systemctl enable tor >> "$LOG_FILE" 2>&1
 systemctl start tor >> "$LOG_FILE" 2>&1
-log "Tor service enabled and started"
+echo "[$(date +%Y-%m-%d\ %H:%M:%S)] Tor service enabled and started" >> "$LOG_FILE"
+sleep 0.5
 
 # --- Step 6: Configure DNSCrypt ---
 CURRENT_STEP=6
 show_progress $CURRENT_STEP $TOTAL_STEPS "Configuring DNSCrypt-Proxy"
-log "Configuring DNSCrypt-Proxy..."
+echo "[$(date +%Y-%m-%d\ %H:%M:%S)] Configuring DNSCrypt-Proxy..." >> "$LOG_FILE"
 # Enable and start the dnscrypt-proxy service
 systemctl enable dnscrypt-proxy >> "$LOG_FILE" 2>&1
 systemctl start dnscrypt-proxy >> "$LOG_FILE" 2>&1
 
 # Check if it started successfully
 if systemctl is-active --quiet dnscrypt-proxy; then
-    log "DNSCrypt-Proxy enabled and started successfully"
+    echo "[$(date +%Y-%m-%d\ %H:%M:%S)] DNSCrypt-Proxy enabled and started successfully" >> "$LOG_FILE"
 else
-    log_warn "DNSCrypt-Proxy service may not have started (check logs)"
+    echo "[$(date +%Y-%m-%d\ %H:%M:%S)] WARNING: DNSCrypt-Proxy service may not have started (check logs)" >> "$LOG_FILE"
 fi
+sleep 0.5
 
 # --- Step 7: Configure Firewall (UFW) - Configure but keep disabled ---
 CURRENT_STEP=7
-show_progress $CURRENT_STEP $TOTAL_STEPS "Configuring UFW firewall rules"
-log "Configuring UFW firewall rules..."
+show_progress $CURRENT_STEP $TOTAL_STEPS "Configuring UFW firewall"
+echo "[$(date +%Y-%m-%d\ %H:%M:%S)] Configuring UFW firewall rules..." >> "$LOG_FILE"
 # Configure UFW rules but keep it DISABLED for now
 # It will be enabled after ProtonVPN is connected
 ufw --force reset >> "$LOG_FILE" 2>&1
@@ -291,51 +300,49 @@ ufw allow out 995 >> "$LOG_FILE" 2>&1      # POP3S
 # Allow established connections
 ufw logging off >> "$LOG_FILE" 2>&1
 
-log "Firewall rules configured (will be enabled after VPN setup)"
+echo "[$(date +%Y-%m-%d\ %H:%M:%S)] Firewall rules configured (will be enabled after VPN setup)" >> "$LOG_FILE"
+sleep 0.5
 
 # --- Step 8: Enable AppArmor ---
 CURRENT_STEP=8
 show_progress $CURRENT_STEP $TOTAL_STEPS "Enabling AppArmor security"
-log "Enabling AppArmor..."
+echo "[$(date +%Y-%m-%d\ %H:%M:%S)] Enabling AppArmor..." >> "$LOG_FILE"
 systemctl enable apparmor >> "$LOG_FILE" 2>&1
 systemctl start apparmor >> "$LOG_FILE" 2>&1
-log "AppArmor enabled and started"
+echo "[$(date +%Y-%m-%d\ %H:%M:%S)] AppArmor enabled and started" >> "$LOG_FILE"
+sleep 0.5
 
 # --- Step 8: Install Secure Messaging Apps (SKIPPED) ---
 # User opted out of installing messaging apps
 # To install manually: apt install signal-desktop telegram-desktop
 
-# --- Step 9: Configure MAC Address Randomization ---
-log "Configuring MAC address randomization..."
-if [ -f /etc/network/interfaces ]; then
-    if ! grep -q 'macchanger' /etc/network/interfaces; then
-        echo "" >> /etc/network/interfaces
-        echo "# MAC address randomization" >> /etc/network/interfaces
-        echo "# Uncomment for your network interface" >> /etc/network/interfaces
-        echo "# pre-up /usr/bin/macchanger -r eth0" >> /etc/network/interfaces
-        log "MAC address randomization configured (commented out - edit /etc/network/interfaces to enable)"
-    else
-        log_info "MAC address randomization already configured"
+# --- Step 9: Save Original MAC Address ---
+CURRENT_STEP=9
+show_progress $CURRENT_STEP $TOTAL_STEPS "Saving original MAC address"
+echo "[$(date +%Y-%m-%d\ %H:%M:%S)] Saving original MAC address..." >> "$LOG_FILE"
+
+# Save original MAC address for later reference
+mkdir -p /var/lib/traceprotocol
+
+# Get the primary network interface
+PRIMARY_INTERFACE=$(ip route | grep default | awk '{print $5}' | head -n1)
+
+if [ -n "$PRIMARY_INTERFACE" ]; then
+    # Get permanent MAC address
+    ORIGINAL_MAC=$(ethtool -P "$PRIMARY_INTERFACE" 2>/dev/null | awk '{print $3}')
+    
+    if [ -n "$ORIGINAL_MAC" ] && [ "$ORIGINAL_MAC" != "00:00:00:00:00:00" ]; then
+        echo "$ORIGINAL_MAC" > /var/lib/traceprotocol/original_mac.txt
+        echo "$PRIMARY_INTERFACE" > /var/lib/traceprotocol/primary_interface.txt
+        echo "[$(date +%Y-%m-%d\ %H:%M:%S)] Original MAC address saved: $ORIGINAL_MAC for $PRIMARY_INTERFACE" >> "$LOG_FILE"
     fi
 fi
+sleep 0.5
 
-# --- Step 10: Configure DNS-over-HTTPS ---
-log "Configuring DNS-over-HTTPS with dnsmasq..."
-if [ ! -f /etc/dnsmasq.conf.backup ]; then
-    cp /etc/dnsmasq.conf /etc/dnsmasq.conf.backup 2>/dev/null || true
-fi
-
-cat > /etc/dnsmasq.conf << 'EOF'
-# DNS-over-HTTPS Configuration
-server=127.0.0.1#5053
-listen-address=127.0.0.1
-bind-interfaces
-EOF
-
-log "DNS-over-HTTPS configured"
-
-# --- Step 11: Create configuration file ---
-log "Creating configuration file..."
+# --- Step 10: Create configuration file ---
+CURRENT_STEP=10
+show_progress $CURRENT_STEP $TOTAL_STEPS "Creating configuration files"
+echo "[$(date +%Y-%m-%d\ %H:%M:%S)] Creating configuration file..." >> "$LOG_FILE"
 cat > "$SCRIPT_DIR/../privacy-tools.conf" << 'EOF'
 # Privacy Tools Configuration
 # Edit this file to customize your setup
@@ -354,56 +361,13 @@ MONITOR_INTERVAL=60
 LOG_RETENTION_DAYS=30
 EOF
 
-log "Configuration file created at $SCRIPT_DIR/../privacy-tools.conf"
+echo "[$(date +%Y-%m-%d\ %H:%M:%S)] Configuration file created at $SCRIPT_DIR/../privacy-tools.conf" >> "$LOG_FILE"
+sleep 0.5
 
-# --- Step 9: Save Original MAC Address ---
-CURRENT_STEP=9
-show_progress $CURRENT_STEP $TOTAL_STEPS "Saving original MAC address"
-log "Saving original MAC address..."
-
-# Create TraceProtocol directory
-mkdir -p /var/lib/traceprotocol
-chmod 755 /var/lib/traceprotocol
-
-# Get all network interfaces (exclude lo, proton, tun, tap)
-FOUND_MAC=false
-for iface in $(ip link show | awk -F: '/state UP/ {gsub(/ /, "", $2); if ($2 !~ /^(lo|proton|tun|tap)/) print $2}'); do
-    # Get the full link info for this interface
-    LINK_INFO=$(ip link show "$iface" | grep "link/ether")
-    
-    if [ -n "$LINK_INFO" ]; then
-        # Try to get permanent MAC address (permaddr) - this is the hardware MAC
-        PERM_MAC=$(echo "$LINK_INFO" | grep -o "permaddr [0-9a-f:][0-9a-f:]*" | awk '{print $2}')
-        
-        # Get current MAC address
-        CURRENT_MAC=$(echo "$LINK_INFO" | awk '{print $2}')
-        
-        if [ -n "$PERM_MAC" ]; then
-            # Save permanent MAC as original (the real hardware MAC)
-            echo "$PERM_MAC" > /var/lib/traceprotocol/original_mac.txt
-            echo "$iface" > /var/lib/traceprotocol/interface.txt
-            log "Original MAC saved: $PERM_MAC (Interface: $iface) [Hardware MAC from permaddr]"
-            FOUND_MAC=true
-            break
-        elif [ -n "$CURRENT_MAC" ]; then
-            # Fallback: save current MAC
-            echo "$CURRENT_MAC" > /var/lib/traceprotocol/original_mac.txt
-            echo "$iface" > /var/lib/traceprotocol/interface.txt
-            log "Original MAC saved: $CURRENT_MAC (Interface: $iface) [No permaddr available]"
-            FOUND_MAC=true
-            break
-        fi
-    fi
-done
-
-if [ "$FOUND_MAC" = false ]; then
-    log_warn "Could not save original MAC address"
-fi
-
-# --- Step 10: Create Conky Configuration ---
-CURRENT_STEP=10
-show_progress $CURRENT_STEP $TOTAL_STEPS "Creating Conky desktop widget"
-log "Creating Conky desktop widget configuration..."
+# --- Step 11: Create Conky Configuration ---
+CURRENT_STEP=11
+show_progress $CURRENT_STEP $TOTAL_STEPS "Creating Conky widget"
+echo "[$(date +%Y-%m-%d\ %H:%M:%S)] Creating Conky desktop widget configuration..." >> "$LOG_FILE"
 
 if [ -n "$SUDO_USER" ]; then
     CONKY_FILE="/home/$SUDO_USER/.conkyrc"
@@ -540,73 +504,24 @@ AUTOSTARTEOF
     chmod +x "$AUTOSTART_FILE"
     chown -R "$SUDO_USER:$SUDO_USER" "$AUTOSTART_DIR"
     
-    log "${GREEN}Conky widget configuration created!${NC}"
+    echo "[$(date +%Y-%m-%d\ %H:%M:%S)] Conky widget configuration created!" >> "$LOG_FILE"
 else
-    log_warn "Could not determine user for Conky configuration"
+    echo "[$(date +%Y-%m-%d\ %H:%M:%S)] WARNING: Could not determine user for Conky configuration" >> "$LOG_FILE"
 fi
+sleep 0.5
 
-# --- Step 11: Cleanup ---
-CURRENT_STEP=11
-show_progress $CURRENT_STEP $TOTAL_STEPS "Cleaning up temporary files"
-log "Running cleanup..."
+# --- Step 12: Cleanup ---
+CURRENT_STEP=12
+show_progress $CURRENT_STEP $TOTAL_STEPS "Cleaning up"
+echo "[$(date +%Y-%m-%d\ %H:%M:%S)] Running cleanup..." >> "$LOG_FILE"
 apt autoremove -y -qq >> "$LOG_FILE" 2>&1
 apt clean -qq >> "$LOG_FILE" 2>&1
-
-# --- Step 12: ProtonVPN Setup Information ---
-CURRENT_STEP=12
-show_progress $CURRENT_STEP $TOTAL_STEPS "ProtonVPN setup preparation"
-echo ""
-echo "========================================"
-log "${BLUE}ProtonVPN Configuration${NC}"
-echo "========================================"
-echo ""
-
-if command -v protonvpn-cli &>/dev/null; then
-    log "${GREEN}ProtonVPN CLI is installed successfully!${NC}"
-    echo ""
-    
-    # Make sure vpn-setup.sh exists and is executable
-    VPN_SETUP_SCRIPT="$SCRIPT_DIR/vpn-setup.sh"
-    if [ -f "$VPN_SETUP_SCRIPT" ] && [ -n "$SUDO_USER" ]; then
-        chmod +x "$VPN_SETUP_SCRIPT"
-        chown "$SUDO_USER:$SUDO_USER" "$VPN_SETUP_SCRIPT"
-    fi
-    
-    echo -e "${CYAN}════════════════════════════════════════${NC}"
-    echo -e "${YELLOW}IMPORTANT: ProtonVPN Setup Required${NC}"
-    echo -e "${CYAN}════════════════════════════════════════${NC}"
-    echo ""
-    echo -e "${YELLOW}ProtonVPN cannot be configured while running as root.${NC}"
-    echo ""
-    echo -e "${BLUE}After this installation completes, please run:${NC}"
-    echo ""
-    echo -e "${GREEN}  ./trace-protocol.sh vpn-setup${NC}"
-    echo ""
-    echo -e "${YELLOW}(WITHOUT sudo - as your normal user)${NC}"
-    echo ""
-    echo "This will:"
-    echo "  1. Login to ProtonVPN with your credentials"
-    echo "  2. Connect to the fastest VPN server"
-    echo "  3. Enable the kill switch"
-    echo "  4. Enable UFW firewall"
-    echo ""
-    echo -e "${YELLOW}Note: UFW firewall is configured but DISABLED${NC}"
-    echo "      It will be enabled after VPN connection"
-    echo ""
-    echo -e "${CYAN}════════════════════════════════════════${NC}"
-    echo ""
-    
-    # Wait a moment so user can read the message
-    sleep 3
-else
-    log_error "ProtonVPN CLI not found. Please check installation."
-fi
+sleep 0.5
 
 # --- Step 13: Start Conky Widget ---
 CURRENT_STEP=13
-show_progress $CURRENT_STEP $TOTAL_STEPS "Starting Conky desktop widget"
-echo ""
-log "Starting Conky desktop widget..."
+show_progress $CURRENT_STEP $TOTAL_STEPS "Starting Conky widget"
+echo "[$(date +%Y-%m-%d\ %H:%M:%S)] Starting Conky desktop widget..." >> "$LOG_FILE"
 
 if [ -f "/home/$SUDO_USER/.conkyrc" ] && [ -n "$SUDO_USER" ]; then
     # Kill existing Conky instances
@@ -622,59 +537,66 @@ if [ -f "/home/$SUDO_USER/.conkyrc" ] && [ -n "$SUDO_USER" ]; then
     # Start Conky as the actual user with proper environment
     sudo -u "$SUDO_USER" DISPLAY="$USER_DISPLAY" nohup conky -c "/home/$SUDO_USER/.conkyrc" >/dev/null 2>&1 &
     
-    sleep 2
+    sleep 1
     
     # Verify Conky is running
     if pgrep -u "$SUDO_USER" conky >/dev/null 2>&1; then
-        log "${GREEN}Conky widget started successfully!${NC}"
-        log_info "Look at the top-right corner of your screen for the TraceProtocol monitor"
+        echo "[$(date +%Y-%m-%d\ %H:%M:%S)] Conky widget started successfully!" >> "$LOG_FILE"
     else
-        log_warn "Conky widget may not have started. It will auto-start on next login."
+        echo "[$(date +%Y-%m-%d\ %H:%M:%S)] WARNING: Conky widget may not have started. It will auto-start on next login." >> "$LOG_FILE"
     fi
 else
-    log_warn "Conky configuration not found. Widget will start on next login."
+    echo "[$(date +%Y-%m-%d\ %H:%M:%S)] WARNING: Conky configuration not found. Widget will start on next login." >> "$LOG_FILE"
 fi
 
+# Finish progress bar
+finish_progress
+
+# Professional completion message
 echo ""
-echo "========================================"
-log "${GREEN}Installation completed successfully!${NC}"
-echo "========================================"
 echo ""
-log_info "TraceProtocol base installation is complete!"
+echo -e "${GREEN}╔════════════════════════════════════════════════════════════════╗${NC}"
+echo -e "${GREEN}║                                                                ║${NC}"
+echo -e "${GREEN}║           ✓  Installation Completed Successfully!              ║${NC}"
+echo -e "${GREEN}║                                                                ║${NC}"
+echo -e "${GREEN}╚════════════════════════════════════════════════════════════════╝${NC}"
 echo ""
-echo -e "${YELLOW}⚠ NEXT STEP REQUIRED:${NC}"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${CYAN}  What Was Installed${NC}"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
-echo -e "${GREEN}Run the VPN setup (WITHOUT sudo):${NC}"
-echo "  ./trace-protocol.sh vpn-setup"
+echo -e "  ${GREEN}✓${NC}  ProtonVPN CLI"
+echo -e "  ${GREEN}✓${NC}  Tor, DNSCrypt-Proxy, AppArmor"
+echo -e "  ${GREEN}✓${NC}  Privacy tools (macchanger, firejail, bleachbit)"
+echo -e "  ${GREEN}✓${NC}  Conky desktop widget (top-right corner)"
+echo -e "  ${GREEN}✓${NC}  UFW firewall (configured, not yet enabled)"
 echo ""
-echo "This will configure ProtonVPN, connect to VPN, and enable firewall."
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${CYAN}  ⚠  IMPORTANT: Next Step Required${NC}"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
-log_info "What's installed:"
-echo "  ✓ ProtonVPN CLI"
-echo "  ✓ Tor, DNSCrypt, AppArmor"
-echo "  ✓ Privacy tools (macchanger, firejail, bleachbit)"
-echo "  ✓ Conky desktop widget"
-echo "  ✓ UFW firewall (configured, not yet enabled)"
+echo -e "  ${YELLOW}ProtonVPN needs to be configured (as normal user, not sudo):${NC}"
 echo ""
-log_info "Quick commands:"
-echo "  • Setup VPN: ./trace-protocol.sh vpn-setup (NO sudo!)"
-echo "  • Check status: ./trace-protocol.sh monitor"
-echo "  • View all commands: ./trace-protocol.sh help"
+echo -e "  ${GREEN}./trace-protocol.sh vpn-setup${NC}"
 echo ""
-log_info "Desktop Widget:"
-echo "  • Conky monitor is running in the top-right corner"
-echo "  • Auto-starts on login"
-echo "  • Restart: pkill conky && conky -c ~/.conkyrc &"
+echo -e "  This will:"
+echo -e "    1. Login to ProtonVPN with your credentials"
+echo -e "    2. Connect to the fastest VPN server"
+echo -e "    3. Enable kill switch"
+echo -e "    4. Optionally enable UFW firewall"
 echo ""
-log_info "Log file saved to: $LOG_FILE"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${CYAN}  Quick Commands${NC}"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
-echo -e "${YELLOW}════════════════════════════════════════${NC}"
-echo -e "${YELLOW}   DON'T REBOOT YET!${NC}"
-echo -e "${YELLOW}════════════════════════════════════════${NC}"
+echo -e "  VPN Setup:      ${GREEN}./trace-protocol.sh vpn-setup${NC} (NO sudo!)"
+echo -e "  Check Status:   ${GREEN}./trace-protocol.sh monitor${NC}"
+echo -e "  All Commands:   ${GREEN}./trace-protocol.sh help${NC}"
 echo ""
-echo "Please run the VPN setup first:"
-echo -e "${GREEN}  ./trace-protocol.sh vpn-setup${NC}"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
-echo "After VPN setup is complete, you can reboot if needed."
+echo -e "  Log file: ${BLUE}$LOG_FILE${NC}"
+echo ""
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 
