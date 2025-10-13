@@ -18,7 +18,37 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+MAGENTA='\033[0;35m'
 NC='\033[0m' # No Color
+
+# Progress tracking
+TOTAL_STEPS=13
+CURRENT_STEP=0
+
+# Function to show progress bar
+show_progress() {
+    local step=$1
+    local total=$2
+    local description=$3
+    
+    local percent=$((step * 100 / total))
+    local filled=$((step * 50 / total))
+    local empty=$((50 - filled))
+    
+    # Create progress bar
+    local bar=""
+    for ((i=0; i<filled; i++)); do bar="${bar}█"; done
+    for ((i=0; i<empty; i++)); do bar="${bar}░"; done
+    
+    echo ""
+    echo -e "${CYAN}╔════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${CYAN}║${NC} Step ${step}/${total} - ${percent}% Complete $(printf '%54s' '') ${CYAN}║${NC}"
+    echo -e "${CYAN}║${NC} ${bar} ${CYAN}║${NC}"
+    echo -e "${CYAN}║${NC} ${description}$(printf '%*s' $((62-${#description})) '') ${CYAN}║${NC}"
+    echo -e "${CYAN}╚════════════════════════════════════════════════════════════════╝${NC}"
+    echo ""
+}
 
 # Function to log messages
 log() {
@@ -74,6 +104,8 @@ EOF
 log "Starting installation process..."
 
 # --- Step 1: System Update ---
+CURRENT_STEP=1
+show_progress $CURRENT_STEP $TOTAL_STEPS "Updating system packages"
 log "Updating system packages..."
 
 # Update package list
@@ -86,6 +118,8 @@ yes | apt upgrade -y -qq -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::
 log "System update completed"
 
 # --- Step 2: Install Base Privacy Tools ---
+CURRENT_STEP=2
+show_progress $CURRENT_STEP $TOTAL_STEPS "Installing base privacy and security packages"
 log "Installing base privacy and security packages..."
 PACKAGES=(
     "tor"
@@ -113,6 +147,8 @@ done
 log "Base packages installation completed"
 
 # --- Step 2b: Install DNSCrypt-Proxy from GitHub ---
+CURRENT_STEP=3
+show_progress $CURRENT_STEP $TOTAL_STEPS "Installing DNSCrypt-Proxy from GitHub"
 log "Installing DNSCrypt-Proxy from GitHub..."
 
 DNSCRYPT_VERSION="2.1.5"
@@ -174,7 +210,9 @@ else
     log_warn "Failed to download DNSCrypt-Proxy. Skipping..."
 fi
 
-# --- Step 3: Install ProtonVPN CLI ---
+# --- Step 4: Install ProtonVPN CLI ---
+CURRENT_STEP=4
+show_progress $CURRENT_STEP $TOTAL_STEPS "Installing ProtonVPN CLI"
 log "Setting up ProtonVPN CLI..."
 
 # Install dependencies
@@ -201,13 +239,17 @@ apt install -y -qq protonvpn-cli >> "$LOG_FILE" 2>&1
 
 log "ProtonVPN CLI installed successfully"
 
-# --- Step 4: Configure Tor ---
+# --- Step 5: Configure Tor ---
+CURRENT_STEP=5
+show_progress $CURRENT_STEP $TOTAL_STEPS "Configuring Tor service"
 log "Configuring Tor service..."
 systemctl enable tor >> "$LOG_FILE" 2>&1
 systemctl start tor >> "$LOG_FILE" 2>&1
 log "Tor service enabled and started"
 
-# --- Step 5: Configure DNSCrypt ---
+# --- Step 6: Configure DNSCrypt ---
+CURRENT_STEP=6
+show_progress $CURRENT_STEP $TOTAL_STEPS "Configuring DNSCrypt-Proxy"
 log "Configuring DNSCrypt-Proxy..."
 # Enable and start the dnscrypt-proxy service
 systemctl enable dnscrypt-proxy >> "$LOG_FILE" 2>&1
@@ -220,7 +262,9 @@ else
     log_warn "DNSCrypt-Proxy service may not have started (check logs)"
 fi
 
-# --- Step 6: Configure Firewall (UFW) - Configure but keep disabled ---
+# --- Step 7: Configure Firewall (UFW) - Configure but keep disabled ---
+CURRENT_STEP=7
+show_progress $CURRENT_STEP $TOTAL_STEPS "Configuring UFW firewall rules"
 log "Configuring UFW firewall rules..."
 # Configure UFW rules but keep it DISABLED for now
 # It will be enabled after ProtonVPN is connected
@@ -249,7 +293,9 @@ ufw logging off >> "$LOG_FILE" 2>&1
 
 log "Firewall rules configured (will be enabled after VPN setup)"
 
-# --- Step 7: Enable AppArmor ---
+# --- Step 8: Enable AppArmor ---
+CURRENT_STEP=8
+show_progress $CURRENT_STEP $TOTAL_STEPS "Enabling AppArmor security"
 log "Enabling AppArmor..."
 systemctl enable apparmor >> "$LOG_FILE" 2>&1
 systemctl start apparmor >> "$LOG_FILE" 2>&1
@@ -310,7 +356,9 @@ EOF
 
 log "Configuration file created at $SCRIPT_DIR/../privacy-tools.conf"
 
-# --- Step 11b: Save Original MAC Address ---
+# --- Step 9: Save Original MAC Address ---
+CURRENT_STEP=9
+show_progress $CURRENT_STEP $TOTAL_STEPS "Saving original MAC address"
 log "Saving original MAC address..."
 
 # Create TraceProtocol directory
@@ -352,7 +400,9 @@ if [ "$FOUND_MAC" = false ]; then
     log_warn "Could not save original MAC address"
 fi
 
-# --- Step 11c: Create Conky Configuration ---
+# --- Step 10: Create Conky Configuration ---
+CURRENT_STEP=10
+show_progress $CURRENT_STEP $TOTAL_STEPS "Creating Conky desktop widget"
 log "Creating Conky desktop widget configuration..."
 
 if [ -n "$SUDO_USER" ]; then
@@ -495,15 +545,19 @@ else
     log_warn "Could not determine user for Conky configuration"
 fi
 
-# --- Cleanup ---
+# --- Step 11: Cleanup ---
+CURRENT_STEP=11
+show_progress $CURRENT_STEP $TOTAL_STEPS "Cleaning up temporary files"
 log "Running cleanup..."
 apt autoremove -y -qq >> "$LOG_FILE" 2>&1
 apt clean -qq >> "$LOG_FILE" 2>&1
 
-# --- Step 12: Automatic ProtonVPN Setup ---
+# --- Step 12: ProtonVPN Setup Information ---
+CURRENT_STEP=12
+show_progress $CURRENT_STEP $TOTAL_STEPS "ProtonVPN setup preparation"
 echo ""
 echo "========================================"
-log "${BLUE}Automatic ProtonVPN Configuration${NC}"
+log "${BLUE}ProtonVPN Configuration${NC}"
 echo "========================================"
 echo ""
 
@@ -549,6 +603,8 @@ else
 fi
 
 # --- Step 13: Start Conky Widget ---
+CURRENT_STEP=13
+show_progress $CURRENT_STEP $TOTAL_STEPS "Starting Conky desktop widget"
 echo ""
 log "Starting Conky desktop widget..."
 
