@@ -51,27 +51,32 @@ finish_progress() {
     echo ""
 }
 
-# Function to log messages
+# Function to log messages (silent - log file only during installation)
 log() {
-    echo -e "${GREEN}[$(date +%Y-%m-%d\ %H:%M:%S)]${NC} $1" | tee -a "$LOG_FILE"
+    echo "[$(date +%Y-%m-%d\ %H:%M:%S)] $1" >> "$LOG_FILE"
 }
 
 log_error() {
-    echo -e "${RED}[$(date +%Y-%m-%d\ %H:%M:%S)] ERROR:${NC} $1" | tee -a "$LOG_FILE"
+    echo "[$(date +%Y-%m-%d\ %H:%M:%S)] ERROR: $1" >> "$LOG_FILE"
 }
 
 log_warn() {
-    echo -e "${YELLOW}[$(date +%Y-%m-%d\ %H:%M:%S)] WARNING:${NC} $1" | tee -a "$LOG_FILE"
+    echo "[$(date +%Y-%m-%d\ %H:%M:%S)] WARNING: $1" >> "$LOG_FILE"
 }
 
 log_info() {
-    echo -e "${BLUE}[$(date +%Y-%m-%d\ %H:%M:%S)] INFO:${NC} $1" | tee -a "$LOG_FILE"
+    echo "[$(date +%Y-%m-%d\ %H:%M:%S)] INFO: $1" >> "$LOG_FILE"
+}
+
+# Function to show message on screen (use for final output only)
+show_message() {
+    echo -e "${GREEN}[$(date +%Y-%m-%d\ %H:%M:%S)]${NC} $1" | tee -a "$LOG_FILE"
 }
 
 # Check if running as root
 check_root() {
     if [[ $EUID -ne 0 ]]; then
-        log_error "This script must be run as root or with sudo"
+        echo -e "${RED}This script must be run as root or with sudo${NC}"
         exit 1
     fi
 }
