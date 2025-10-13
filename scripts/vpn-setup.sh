@@ -46,71 +46,151 @@ echo ""
 # Step 0: MAC Address Randomization
 echo -e "${CYAN}Step 0: MAC Address Randomization${NC}"
 echo ""
-echo -e "${YELLOW}Randomize your MAC address? (Recommended for privacy) (y/n)${NC}"
-read -p "Answer: " randomize_mac
 
-if [[ "$randomize_mac" =~ ^[Yy]$ ]]; then
-    echo ""
-    if [ -f "$(dirname "$0")/mac-changer.sh" ]; then
-        bash "$(dirname "$0")/mac-changer.sh" randomize
+# Check if MAC address was already randomized during install
+MAC_BACKUP_FILE="/var/lib/traceprotocol/original_mac.txt"
+INTERFACE=$(ip route | grep default | awk '{print $5}' | head -1)
+
+if [ -f "$MAC_BACKUP_FILE" ] && [ -n "$INTERFACE" ]; then
+    ORIGINAL_MAC=$(cat "$MAC_BACKUP_FILE" 2>/dev/null)
+    CURRENT_MAC=$(ip link show "$INTERFACE" | grep "link/ether" | awk '{print $2}')
+    
+    if [ -n "$ORIGINAL_MAC" ] && [ -n "$CURRENT_MAC" ] && [ "$ORIGINAL_MAC" != "$CURRENT_MAC" ]; then
+        echo -e "${GREEN}✓ MAC address already randomized during installation${NC}"
+        echo -e "${BLUE}Interface:${NC}     $INTERFACE"
+        echo -e "${BLUE}Original MAC:${NC}  $ORIGINAL_MAC"
+        echo -e "${BLUE}Current MAC:${NC}   $CURRENT_MAC"
+        echo ""
     else
-        echo -e "${YELLOW}MAC changer script not found. Skipping...${NC}"
+        echo -e "${YELLOW}Randomize your MAC address? (Recommended for privacy) (y/n)${NC}"
+        read -p "Answer: " randomize_mac
+        
+        if [[ "$randomize_mac" =~ ^[Yy]$ ]]; then
+            echo ""
+            if [ -f "$(dirname "$0")/mac-changer.sh" ]; then
+                bash "$(dirname "$0")/mac-changer.sh" randomize
+            else
+                echo -e "${YELLOW}MAC changer script not found. Skipping...${NC}"
+            fi
+            echo ""
+        else
+            echo ""
+            echo -e "${BLUE}MAC randomization skipped.${NC}"
+            echo ""
+        fi
     fi
-    echo ""
 else
-    echo ""
-    echo -e "${BLUE}MAC randomization skipped.${NC}"
-    echo ""
+    echo -e "${YELLOW}Randomize your MAC address? (Recommended for privacy) (y/n)${NC}"
+    read -p "Answer: " randomize_mac
+    
+    if [[ "$randomize_mac" =~ ^[Yy]$ ]]; then
+        echo ""
+        if [ -f "$(dirname "$0")/mac-changer.sh" ]; then
+            bash "$(dirname "$0")/mac-changer.sh" randomize
+        else
+            echo -e "${YELLOW}MAC changer script not found. Skipping...${NC}"
+        fi
+        echo ""
+    else
+        echo ""
+        echo -e "${BLUE}MAC randomization skipped.${NC}"
+        echo ""
+    fi
 fi
 
 # Step 1: Login
 echo -e "${CYAN}Step 1: ProtonVPN Login${NC}"
 echo ""
-echo -e "${YELLOW}Enter your ProtonVPN username:${NC}"
-read -p "Username: " pvpn_username
 
-if [ -z "$pvpn_username" ]; then
-    echo -e "${RED}No username provided.${NC}"
-    exit 1
-fi
+# Check if already logged in
+echo -e "${BLUE}Checking login status...${NC}"
+LOGIN_STATUS=$(protonvpn-cli status 2>/dev/null | grep -i "session\|login\|user" || echo "not_logged_in")
 
-echo ""
-echo -e "${CYAN}Logging in to ProtonVPN...${NC}"
-echo ""
-
-if protonvpn-cli login "$pvpn_username"; then
-    echo ""
-    echo -e "${GREEN}✓ Login successful!${NC}"
+if echo "$LOGIN_STATUS" | grep -qi "session.*valid\|logged.*in\|user.*logged" || protonvpn-cli status 2>/dev/null | grep -qi "server:\|country:"; then
+    echo -e "${GREEN}✓ Already logged in to ProtonVPN${NC}"
+    
+    # Show current status
+    CURRENT_USER=$(protonvpn-cli status 2>/dev/null | grep -i "user\|account" | head -1 || echo "")
+    if [ -n "$CURRENT_USER" ]; then
+        echo -e "${BLUE}$CURRENT_USER${NC}"
+    fi
     echo ""
 else
+    echo -e "${YELLOW}Enter your ProtonVPN username:${NC}"
+    read -p "Username: " pvpn_username
+    
+    if [ -z "$pvpn_username" ]; then
+        echo -e "${RED}No username provided.${NC}"
+        exit 1
+    fi
+    
     echo ""
-    echo -e "${RED}✗ Login failed.${NC}"
-    echo "Please try again or check your credentials."
-    exit 1
+    echo -e "${CYAN}Logging in to ProtonVPN...${NC}"
+    echo ""
+    
+    # Capture the login output to check for "already logged in" message
+    LOGIN_OUTPUT=$(protonvpn-cli login "$pvpn_username" 2>&1)
+    LOGIN_RESULT=$?
+    
+    if [ $LOGIN_RESULT -eq 0 ] || echo "$LOGIN_OUTPUT" | grep -qi "already.*logged.*in\|session.*exists"; then
+        echo ""
+        echo -e "${GREEN}✓ Login successful!${NC}"
+        echo ""
+    else
+        echo ""
+        echo "$LOGIN_OUTPUT"
+        echo ""
+        echo -e "${RED}✗ Login failed.${NC}"
+        echo "Please try again or check your credentials."
+        exit 1
+    fi
 fi
 
 # Step 2: Connect to VPN
 echo -e "${CYAN}Step 2: Connect to VPN${NC}"
 echo ""
-echo -e "${YELLOW}Would you like to connect to VPN now? (y/n)${NC}"
-read -p "Answer: " connect_vpn
 
-if [[ "$connect_vpn" =~ ^[Yy]$ ]]; then
+# Check if already connected
+echo -e "${BLUE}Checking VPN connection status...${NC}"
+VPN_STATUS=$(protonvpn-cli status 2>/dev/null)
+
+if echo "$VPN_STATUS" | grep -qi "status:.*connected\|server:" && echo "$VPN_STATUS" | grep -qi "ip:"; then
+    echo -e "${GREEN}✓ VPN is already connected${NC}"
     echo ""
-    echo -e "${CYAN}Connecting to fastest VPN server...${NC}"
-    echo ""
-    
-    # Try to connect (command output already shows if successful)
-    protonvpn-cli c -f
-    
-    # Wait for connection to fully establish
-    sleep 5
-    
-    echo ""
-    # Show current status
     echo -e "${CYAN}Current VPN Status:${NC}"
     protonvpn-cli status
     echo ""
+    
+    # Skip to kill switch check since VPN is already connected
+    connect_vpn="y"
+else
+    echo -e "${YELLOW}Would you like to connect to VPN now? (y/n)${NC}"
+    read -p "Answer: " connect_vpn
+fi
+
+if [[ "$connect_vpn" =~ ^[Yy]$ ]]; then
+    # Check if we need to actually connect or if already connected
+    if echo "$VPN_STATUS" | grep -qi "status:.*connected\|server:" && echo "$VPN_STATUS" | grep -qi "ip:"; then
+        # Already connected, skip connection
+        echo -e "${BLUE}VPN connection confirmed. Proceeding to security settings...${NC}"
+    else
+        # Need to connect
+        echo ""
+        echo -e "${CYAN}Connecting to fastest VPN server...${NC}"
+        echo ""
+        
+        # Try to connect (command output already shows if successful)
+        protonvpn-cli c -f
+        
+        # Wait for connection to fully establish
+        sleep 5
+        
+        echo ""
+        # Show current status
+        echo -e "${CYAN}Current VPN Status:${NC}"
+        protonvpn-cli status
+        echo ""
+    fi
     
     # Always continue to kill switch and firewall setup
     # (VPN connection was successful based on command output)
@@ -118,69 +198,91 @@ if [[ "$connect_vpn" =~ ^[Yy]$ ]]; then
     # Step 3: Enable Kill Switch
     echo -e "${CYAN}Step 3: Enable Kill Switch${NC}"
     echo ""
-    echo -e "${YELLOW}Enable kill switch? (Recommended - blocks internet if VPN disconnects) (y/n)${NC}"
-    read -p "Answer: " enable_ks
     
-    if [[ "$enable_ks" =~ ^[Yy]$ ]]; then
+    # Check if kill switch is already enabled
+    echo -e "${BLUE}Checking kill switch status...${NC}"
+    KS_STATUS=$(protonvpn-cli ks --status 2>/dev/null || echo "unknown")
+    
+    if echo "$KS_STATUS" | grep -qi "enabled\|on"; then
+        echo -e "${GREEN}✓ Kill switch is already enabled${NC}"
         echo ""
-        echo -e "${CYAN}Enabling kill switch...${NC}"
+    else
+        echo -e "${YELLOW}Enable kill switch? (Recommended - blocks internet if VPN disconnects) (y/n)${NC}"
+        read -p "Answer: " enable_ks
         
-        if protonvpn-cli ks --on; then
+        if [[ "$enable_ks" =~ ^[Yy]$ ]]; then
             echo ""
-            echo -e "${GREEN}✓ Kill switch enabled!${NC}"
+            echo -e "${CYAN}Enabling kill switch...${NC}"
+            
+            if protonvpn-cli ks --on; then
+                echo ""
+                echo -e "${GREEN}✓ Kill switch enabled!${NC}"
+            else
+                echo ""
+                echo -e "${YELLOW}⚠ Kill switch activation failed.${NC}"
+                echo "You can enable it later with: protonvpn-cli ks --on"
+            fi
         else
             echo ""
-            echo -e "${YELLOW}⚠ Kill switch activation failed.${NC}"
+            echo -e "${BLUE}Kill switch not enabled.${NC}"
             echo "You can enable it later with: protonvpn-cli ks --on"
         fi
-    else
-        echo ""
-        echo -e "${BLUE}Kill switch not enabled.${NC}"
-        echo "You can enable it later with: protonvpn-cli ks --on"
     fi
     
     # Step 4: Enable UFW Firewall
     echo ""
     echo -e "${CYAN}Step 4: Enable Firewall${NC}"
     echo ""
-    echo -e "${YELLOW}Enable UFW firewall?${NC}"
-    echo ""
-    echo -e "${BLUE}Note:${NC} UFW provides extra security but may block some applications"
-    echo "(like Cursor IDE, development servers, etc.)"
-    echo ""
-    echo -e "${CYAN}Options:${NC}"
-    echo "  y - Enable UFW (more secure, may block some apps)"
-    echo "  n - Skip UFW (less secure, all apps work)"
-    echo ""
-    read -p "Enable UFW? (y/n): " enable_ufw
     
-    if [[ "$enable_ufw" =~ ^[Yy]$ ]]; then
+    # Check if UFW is already enabled
+    echo -e "${BLUE}Checking firewall status...${NC}"
+    UFW_STATUS=$(sudo ufw status 2>/dev/null || echo "inactive")
+    
+    if echo "$UFW_STATUS" | grep -qi "status:.*active\|active"; then
+        echo -e "${GREEN}✓ UFW firewall is already enabled${NC}"
         echo ""
-        echo -e "${CYAN}Enabling UFW firewall...${NC}"
+        sudo ufw status verbose
+        echo ""
+    else
+        echo -e "${YELLOW}Enable UFW firewall?${NC}"
+        echo ""
+        echo -e "${BLUE}Note:${NC} UFW provides extra security but may block some applications"
+        echo "(like Cursor IDE, development servers, etc.)"
+        echo ""
+        echo -e "${CYAN}Options:${NC}"
+        echo "  y - Enable UFW (more secure, may block some apps)"
+        echo "  n - Skip UFW (less secure, all apps work)"
+        echo ""
+        read -p "Enable UFW? (y/n): " enable_ufw
         
-        if sudo ufw --force enable; then
+        if [[ "$enable_ufw" =~ ^[Yy]$ ]]; then
             echo ""
-            echo -e "${GREEN}✓ UFW firewall enabled!${NC}"
-            echo ""
-            sudo ufw status verbose
-            echo ""
-            echo -e "${YELLOW}If some applications stop working:${NC}"
-            echo "  • Disable UFW: ./trace-protocol.sh firewall-off"
-            echo "  • Check status: sudo ufw status"
-            echo "  • Reconfigure: ./trace-protocol.sh firewall-config"
+            echo -e "${CYAN}Enabling UFW firewall...${NC}"
+            
+            if sudo ufw --force enable; then
+                echo ""
+                echo -e "${GREEN}✓ UFW firewall enabled!${NC}"
+                echo ""
+                sudo ufw status verbose
+                echo ""
+                echo -e "${YELLOW}If some applications stop working:${NC}"
+                echo "  • Disable UFW: ./trace-protocol.sh firewall-off"
+                echo "  • Check status: sudo ufw status"
+                echo "  • Reconfigure: ./trace-protocol.sh firewall-config"
+            else
+                echo ""
+                echo -e "${YELLOW}⚠ Failed to enable firewall.${NC}"
+                echo "You can enable it later with: sudo ufw enable"
+            fi
         else
             echo ""
-            echo -e "${YELLOW}⚠ Failed to enable firewall.${NC}"
-            echo "You can enable it later with: sudo ufw enable"
+            echo -e "${BLUE}Firewall not enabled.${NC}"
+            echo ""
+            echo -e "${YELLOW}Your VPN and kill switch still protect you,${NC}"
+            echo "but UFW provides an additional security layer."
+            echo ""
+            echo "Enable later with: ./trace-protocol.sh firewall-on"
         fi
-    else
-        echo ""
-        echo -e "${BLUE}Firewall not enabled.${NC}"
-        echo ""
-        echo -e "${YELLOW}Your VPN and kill switch still protect you,${NC}"
-        echo "but UFW provides an additional security layer."
-        echo ""
-        echo "Enable later with: ./trace-protocol.sh firewall-on"
     fi
 else
     echo ""
