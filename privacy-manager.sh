@@ -40,6 +40,7 @@ show_help() {
     echo -e "${GREEN}COMMANDS:${NC}"
     echo -e "  ${CYAN}install${NC}          - Install all privacy tools and ProtonVPN"
     echo -e "  ${CYAN}uninstall${NC}        - Uninstall all privacy tools"
+    echo -e "  ${CYAN}vpn-setup${NC}        - Setup ProtonVPN (login, connect, kill switch)"
     echo -e "  ${CYAN}monitor${NC}          - Check status of all privacy tools"
     echo -e "  ${CYAN}monitor-live${NC}     - Continuously monitor status (refreshes every 30s)"
     echo -e "  ${CYAN}vpn-connect${NC}      - Connect to ProtonVPN (fastest server)"
@@ -55,7 +56,8 @@ show_help() {
     echo -e "  ${CYAN}version${NC}          - Show version information"
     echo ""
     echo -e "${GREEN}EXAMPLES:${NC}"
-    echo "  ./privacy-manager.sh install       # Install all tools"
+    echo "  sudo ./privacy-manager.sh install  # Install all tools (with sudo)"
+    echo "  ./privacy-manager.sh vpn-setup     # Setup VPN (without sudo)"
     echo "  ./privacy-manager.sh monitor       # Check system status"
     echo "  ./privacy-manager.sh vpn-connect   # Connect to VPN (fastest)"
     echo "  protonvpn-cli c -f                 # Direct VPN connect"
@@ -108,6 +110,21 @@ cmd_uninstall() {
     else
         bash "$SCRIPT_DIR/scripts/uninstall.sh"
     fi
+}
+
+# VPN Setup command
+cmd_vpn_setup() {
+    check_script "vpn-setup.sh"
+    
+    if [[ $EUID -eq 0 ]]; then
+        echo -e "${RED}ERROR: Do NOT run vpn-setup with sudo!${NC}"
+        echo -e "${YELLOW}Run it as your normal user:${NC}"
+        echo "  ./privacy-manager.sh vpn-setup"
+        echo ""
+        exit 1
+    fi
+    
+    bash "$SCRIPT_DIR/scripts/vpn-setup.sh"
 }
 
 # Monitor command
@@ -294,6 +311,9 @@ main() {
             ;;
         uninstall)
             cmd_uninstall
+            ;;
+        vpn-setup)
+            cmd_vpn_setup
             ;;
         monitor)
             cmd_monitor

@@ -366,102 +366,44 @@ echo "========================================"
 echo ""
 
 if command -v protonvpn-cli &>/dev/null; then
-    log_info "ProtonVPN CLI detected. Starting automatic configuration..."
+    log_info "ProtonVPN CLI is installed successfully!"
+    echo ""
     
     # Check if we have SUDO_USER (not running as pure root)
     if [ -z "$SUDO_USER" ] || [ "$SUDO_USER" = "root" ]; then
-        log_error "ProtonVPN setup requires running with sudo (not as root directly)"
+        log_warn "ProtonVPN setup requires running with sudo (not as root directly)"
         log_info "Please run: sudo ./privacy-manager.sh install"
     else
-        # Ask if user wants automatic setup
-        echo ""
+        # Ask if user wants to configure ProtonVPN
         echo -e "${YELLOW}Would you like to configure ProtonVPN now? (y/n)${NC}"
         read -p "Answer: " setup_vpn
         
         if [[ "$setup_vpn" =~ ^[Yy]$ ]]; then
             echo ""
-            log "Starting ProtonVPN login process..."
+            log "${BLUE}Starting ProtonVPN setup as normal user (not root)...${NC}"
             echo ""
             
-            # Ask for ProtonVPN username
-            echo -e "${CYAN}Enter your ProtonVPN username:${NC}"
-            read -p "Username: " pvpn_username
-            
-            if [ -z "$pvpn_username" ]; then
-                log_error "No username provided. Skipping ProtonVPN configuration."
+            # Make sure vpn-setup.sh exists and is executable
+            VPN_SETUP_SCRIPT="$SCRIPT_DIR/vpn-setup.sh"
+            if [ ! -f "$VPN_SETUP_SCRIPT" ]; then
+                log_error "VPN setup script not found: $VPN_SETUP_SCRIPT"
             else
-                log "Logging in as user: $pvpn_username"
+                chmod +x "$VPN_SETUP_SCRIPT"
+                chown "$SUDO_USER:$SUDO_USER" "$VPN_SETUP_SCRIPT"
+                
+                # Run the VPN setup script as the actual user (not root!)
+                # This avoids all the "running as root" issues
+                sudo -u "$SUDO_USER" bash "$VPN_SETUP_SCRIPT"
+                
                 echo ""
-                
-                # Get user's home directory
-                USER_HOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
-                USER_UID=$(id -u "$SUDO_USER")
-                
-                # Get user's DBUS session address
-                DBUS_ADDR=$(sudo -u "$SUDO_USER" env | grep DBUS_SESSION_BUS_ADDRESS | cut -d= -f2-)
-                if [ -z "$DBUS_ADDR" ]; then
-                    DBUS_ADDR="unix:path=/run/user/$USER_UID/bus"
-                fi
-                
-                # Login to ProtonVPN as the actual user with proper environment
-                if sudo -u "$SUDO_USER" DBUS_SESSION_BUS_ADDRESS="$DBUS_ADDR" HOME="$USER_HOME" protonvpn-cli login "$pvpn_username"; then
-                    log "${GREEN}ProtonVPN login successful!${NC}"
-                    echo ""
-                    
-                    # Connect to VPN first
-                    echo -e "${YELLOW}Connect to VPN now? (y/n)${NC}"
-                    read -p "Answer: " connect_vpn
-                    
-                    if [[ "$connect_vpn" =~ ^[Yy]$ ]]; then
-                        log "Connecting to fastest VPN server..."
-                        echo ""
-                        
-                        # Connect as user with -f flag (fastest)
-                        if sudo -u "$SUDO_USER" DBUS_SESSION_BUS_ADDRESS="$DBUS_ADDR" HOME="$USER_HOME" protonvpn-cli c -f; then
-                            sleep 3
-                            
-                            # Check if actually connected
-                            if sudo -u "$SUDO_USER" DBUS_SESSION_BUS_ADDRESS="$DBUS_ADDR" HOME="$USER_HOME" protonvpn-cli status 2>/dev/null | grep -qi "connected"; then
-                                log "${GREEN}VPN connected successfully!${NC}"
-                                echo ""
-                                
-                                # Show connection status
-                                log_info "Current VPN Status:"
-                                sudo -u "$SUDO_USER" DBUS_SESSION_BUS_ADDRESS="$DBUS_ADDR" HOME="$USER_HOME" protonvpn-cli status
-                                echo ""
-                                
-                                # Now ask about kill switch (AFTER connecting)
-                                echo -e "${YELLOW}Enable kill switch? (Recommended - blocks internet if VPN disconnects) (y/n)${NC}"
-                                read -p "Answer: " enable_ks
-                                
-                                if [[ "$enable_ks" =~ ^[Yy]$ ]]; then
-                                    log "Enabling kill switch..."
-                                    if sudo -u "$SUDO_USER" DBUS_SESSION_BUS_ADDRESS="$DBUS_ADDR" HOME="$USER_HOME" protonvpn-cli ks --on >> "$LOG_FILE" 2>&1; then
-                                        log "${GREEN}Kill switch enabled!${NC}"
-                                    else
-                                        log_warn "Kill switch activation failed (you can enable it later)"
-                                    fi
-                                else
-                                    log_info "Kill switch not enabled (you can enable it later with: protonvpn-cli ks --on)"
-                                fi
-                            else
-                                log_error "VPN connection failed. Please check your connection."
-                                log_info "You can connect later with: protonvpn-cli c -f"
-                            fi
-                        else
-                            log_error "VPN connection failed (you can connect later with: protonvpn-cli c -f)"
-                        fi
-                    else
-                        log_info "VPN not connected (you can connect later with: protonvpn-cli c -f)"
-                    fi
-                else
-                    log_error "ProtonVPN login failed"
-                    log_info "You can login later with: protonvpn-cli login YOUR_USERNAME"
-                fi
+                log "${GREEN}ProtonVPN configuration completed!${NC}"
             fi
         else
+            echo ""
             log_info "Skipping ProtonVPN configuration"
-            log_info "You can configure it later with: protonvpn-cli login YOUR_USERNAME"
+            log_info "You can configure it later by running (WITHOUT sudo):"
+            echo "  ./scripts/vpn-setup.sh"
+            echo ""
         fi
     fi
 else
@@ -493,6 +435,10 @@ log "${GREEN}Installation completed successfully!${NC}"
 echo "========================================"
 echo ""
 log_info "TraceProtocol is now installed and configured!"
+echo ""
+log_info "ProtonVPN Setup:"
+echo "  • If you skipped VPN setup, run (WITHOUT sudo):"
+echo "    ./scripts/vpn-setup.sh"
 echo ""
 log_info "Quick commands:"
 echo "  • Check status: ./privacy-manager.sh monitor"
