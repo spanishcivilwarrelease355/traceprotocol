@@ -8,7 +8,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LOG_FILE="$SCRIPT_DIR/../logs/install_$(date +%Y%m%d_%H%M%S).log"
 
-# Make installation non-interactive
+# Make all apt operations non-interactive
 export DEBIAN_FRONTEND=noninteractive
 export APT_LISTCHANGES_FRONTEND=none
 export NEEDRESTART_MODE=a
@@ -58,8 +58,14 @@ log "Starting installation process..."
 
 # --- Step 1: System Update ---
 log "Updating system packages..."
+
+# Update package list
 apt-get update -qq >> "$LOG_FILE" 2>&1
-apt-get upgrade -y -qq -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" >> "$LOG_FILE" 2>&1
+
+# Use 'yes' to automatically answer prompts and upgrade
+log "Upgrading packages (this may take a while)..."
+yes | apt-get upgrade -y -qq -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" >> "$LOG_FILE" 2>&1 || true
+
 log "System update completed"
 
 # --- Step 2: Install Base Privacy Tools ---
