@@ -366,46 +366,38 @@ echo "========================================"
 echo ""
 
 if command -v protonvpn-cli &>/dev/null; then
-    log_info "ProtonVPN CLI is installed successfully!"
+    log "${GREEN}ProtonVPN CLI is installed successfully!${NC}"
     echo ""
     
-    # Check if we have SUDO_USER (not running as pure root)
-    if [ -z "$SUDO_USER" ] || [ "$SUDO_USER" = "root" ]; then
-        log_warn "ProtonVPN setup requires running with sudo (not as root directly)"
-        log_info "Please run: sudo ./privacy-manager.sh install"
-    else
-        # Ask if user wants to configure ProtonVPN
-        echo -e "${YELLOW}Would you like to configure ProtonVPN now? (y/n)${NC}"
-        read -p "Answer: " setup_vpn
-        
-        if [[ "$setup_vpn" =~ ^[Yy]$ ]]; then
-            echo ""
-            log "${BLUE}Starting ProtonVPN setup as normal user (not root)...${NC}"
-            echo ""
-            
-            # Make sure vpn-setup.sh exists and is executable
-            VPN_SETUP_SCRIPT="$SCRIPT_DIR/vpn-setup.sh"
-            if [ ! -f "$VPN_SETUP_SCRIPT" ]; then
-                log_error "VPN setup script not found: $VPN_SETUP_SCRIPT"
-            else
-                chmod +x "$VPN_SETUP_SCRIPT"
-                chown "$SUDO_USER:$SUDO_USER" "$VPN_SETUP_SCRIPT"
-                
-                # Run the VPN setup script as the actual user (not root!)
-                # This avoids all the "running as root" issues
-                sudo -u "$SUDO_USER" bash "$VPN_SETUP_SCRIPT"
-                
-                echo ""
-                log "${GREEN}ProtonVPN configuration completed!${NC}"
-            fi
-        else
-            echo ""
-            log_info "Skipping ProtonVPN configuration"
-            log_info "You can configure it later by running (WITHOUT sudo):"
-            echo "  ./scripts/vpn-setup.sh"
-            echo ""
-        fi
+    # Make sure vpn-setup.sh exists and is executable
+    VPN_SETUP_SCRIPT="$SCRIPT_DIR/vpn-setup.sh"
+    if [ -f "$VPN_SETUP_SCRIPT" ] && [ -n "$SUDO_USER" ]; then
+        chmod +x "$VPN_SETUP_SCRIPT"
+        chown "$SUDO_USER:$SUDO_USER" "$VPN_SETUP_SCRIPT"
     fi
+    
+    echo -e "${CYAN}════════════════════════════════════════${NC}"
+    echo -e "${YELLOW}IMPORTANT: ProtonVPN Setup Required${NC}"
+    echo -e "${CYAN}════════════════════════════════════════${NC}"
+    echo ""
+    echo -e "${YELLOW}ProtonVPN cannot be configured while running as root.${NC}"
+    echo ""
+    echo -e "${BLUE}After this installation completes, please run:${NC}"
+    echo ""
+    echo -e "${GREEN}  ./privacy-manager.sh vpn-setup${NC}"
+    echo ""
+    echo -e "${YELLOW}(WITHOUT sudo - as your normal user)${NC}"
+    echo ""
+    echo "This will:"
+    echo "  1. Login to ProtonVPN with your credentials"
+    echo "  2. Connect to the fastest VPN server"
+    echo "  3. Enable the kill switch"
+    echo ""
+    echo -e "${CYAN}════════════════════════════════════════${NC}"
+    echo ""
+    
+    # Wait a moment so user can read the message
+    sleep 3
 else
     log_error "ProtonVPN CLI not found. Please check installation."
 fi
