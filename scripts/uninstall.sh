@@ -36,8 +36,8 @@ show_progress() {
     for ((i=0; i<empty; i++)); do bar="${bar}░"; done
     bar="${bar}]"
     
-    # Print with carriage return to update same line
-    printf "\r${CYAN}Progress:${NC} ${bar} ${YELLOW}${percent}%%${NC} - ${description}...                    "
+    # Print with carriage return to update same line (clear rest of line with spaces)
+    printf "\r${CYAN}Progress:${NC} ${bar} ${YELLOW}%3d%%${NC} - %-40s" "$percent" "$description..."
 }
 
 # Function to finish progress (move to new line)
@@ -130,6 +130,7 @@ fi
 
 # Stop Conky widget
 pkill conky 2>/dev/null || true
+sleep 0.3
 
 # Step 2: Stop Services
 CURRENT_STEP=2
@@ -140,6 +141,7 @@ systemctl stop dnscrypt-proxy2 2>/dev/null || true
 systemctl disable tor 2>/dev/null || true
 systemctl disable dnscrypt-proxy 2>/dev/null || true
 systemctl disable dnscrypt-proxy2 2>/dev/null || true
+sleep 0.3
 
 # Step 3: Remove DNSCrypt-Proxy
 CURRENT_STEP=3
@@ -148,11 +150,13 @@ rm -f /usr/local/bin/dnscrypt-proxy 2>/dev/null || true
 rm -rf /etc/dnscrypt-proxy 2>/dev/null || true
 rm -f /etc/systemd/system/dnscrypt-proxy.service 2>/dev/null || true
 systemctl daemon-reload 2>/dev/null || true
+sleep 0.3
 
 # Step 4: Disable Firewall
 CURRENT_STEP=4
 show_progress $CURRENT_STEP $TOTAL_STEPS "Disabling firewall"
-ufw disable 2>/dev/null || true
+ufw disable >/dev/null 2>&1 || true
+sleep 0.3
 
 # Step 5: Remove Packages
 CURRENT_STEP=5
@@ -173,16 +177,18 @@ PACKAGES=(
 
 for package in "${PACKAGES[@]}"; do
     if dpkg -l | grep -qw "$package" 2>/dev/null; then
-        apt remove --purge -y "$package" >> /dev/null 2>&1 || true
+        DEBIAN_FRONTEND=noninteractive apt-get remove --purge -y "$package" >/dev/null 2>&1 || true
     fi
 done
+sleep 0.3
 
 # Step 6: Remove ProtonVPN Repository
 CURRENT_STEP=6
 show_progress $CURRENT_STEP $TOTAL_STEPS "Removing repository"
-apt remove --purge -y protonvpn-stable-release 2>/dev/null || true
+DEBIAN_FRONTEND=noninteractive apt-get remove --purge -y protonvpn-stable-release >/dev/null 2>&1 || true
 rm -f /etc/apt/sources.list.d/protonvpn* 2>/dev/null || true
 rm -f /usr/share/keyrings/protonvpn-stable-archive-keyring.gpg 2>/dev/null || true
+sleep 0.3
 
 # Step 7: Clean Configurations
 CURRENT_STEP=7
@@ -216,33 +222,55 @@ fi
 
 # Remove TraceProtocol data directory
 rm -rf /var/lib/traceprotocol 2>/dev/null || true
+sleep 0.3
 
 # Step 8: Final Cleanup
 CURRENT_STEP=8
 show_progress $CURRENT_STEP $TOTAL_STEPS "Final cleanup"
-apt autoremove -y >> /dev/null 2>&1
-apt autoclean >> /dev/null 2>&1
+DEBIAN_FRONTEND=noninteractive apt-get autoremove -y >/dev/null 2>&1 || true
+DEBIAN_FRONTEND=noninteractive apt-get autoclean >/dev/null 2>&1 || true
+sleep 0.3
 
 # Finish progress bar
 finish_progress
+
+# Professional completion output
 echo ""
-echo -e "${GREEN}✓ Uninstallation completed successfully!${NC}"
 echo ""
-echo -e "${CYAN}What Was Removed:${NC}"
-echo -e "  ${GREEN}✓${NC} ProtonVPN CLI and privacy packages"
-echo -e "  ${GREEN}✓${NC} Tor, DNSCrypt, AppArmor services"
-echo -e "  ${GREEN}✓${NC} Conky desktop widget"
-echo -e "  ${GREEN}✓${NC} All configurations and user data"
+echo -e "${GREEN}╔════════════════════════════════════════════════════════════════╗${NC}"
+echo -e "${GREEN}║                                                                ║${NC}"
+echo -e "${GREEN}║          ✓  Uninstallation Completed Successfully!             ║${NC}"
+echo -e "${GREEN}║                                                                ║${NC}"
+echo -e "${GREEN}╚════════════════════════════════════════════════════════════════╝${NC}"
 echo ""
-echo -e "${CYAN}System Packages Kept:${NC}"
-echo -e "  ${BLUE}•${NC} AppArmor (system security)"
-echo -e "  ${BLUE}•${NC} UFW (firewall - disabled)"
-echo -e "  ${BLUE}•${NC} Core networking utilities"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${CYAN}  What Was Removed${NC}"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
-echo -e "${CYAN}TraceProtocol:${NC}"
-echo -e "  Location: ${BLUE}$SCRIPT_DIR/..${NC}"
-echo -e "  Status:   ${GREEN}Scripts intact${NC} (packages removed)"
+echo -e "  ${GREEN}✓${NC}  ProtonVPN CLI and privacy packages"
+echo -e "  ${GREEN}✓${NC}  Tor, DNSCrypt, AppArmor services"
+echo -e "  ${GREEN}✓${NC}  Conky desktop widget"
+echo -e "  ${GREEN}✓${NC}  All configurations and user data"
 echo ""
-echo -e "${YELLOW}To reinstall, run:${NC} sudo ./trace-protocol.sh install"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${CYAN}  System Packages Kept${NC}"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo ""
+echo -e "  ${BLUE}•${NC}  AppArmor (core system security)"
+echo -e "  ${BLUE}•${NC}  UFW firewall (disabled)"
+echo -e "  ${BLUE}•${NC}  Core networking utilities"
+echo ""
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${CYAN}  TraceProtocol Project${NC}"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo ""
+echo -e "  Location:  ${BLUE}$SCRIPT_DIR/..${NC}"
+echo -e "  Status:    ${GREEN}Scripts preserved${NC} (only packages removed)"
+echo ""
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo ""
+echo -e "  ${YELLOW}To reinstall:${NC}  ${GREEN}sudo ./trace-protocol.sh install${NC}"
+echo ""
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 
