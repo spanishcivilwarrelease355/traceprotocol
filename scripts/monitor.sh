@@ -201,10 +201,17 @@ main() {
     
     # Package Checks
     echo -e "${CYAN}━━━ Package Status ━━━${NC}"
-    check_package "proton-vpn-gnome-desktop" "ProtonVPN"
-    check_package "tor" "Tor"
-    check_package "dnscrypt-proxy" "DNSCrypt-Proxy"
-    check_package "macchanger" "MAC Changer"
+check_package "proton-vpn-gnome-desktop" "ProtonVPN"
+check_package "tor" "Tor"
+# Check for either dnscrypt-proxy or dnscrypt-proxy2
+if dpkg -l | grep -qw "dnscrypt-proxy2" 2>/dev/null; then
+    print_status "pass" "DNSCrypt-Proxy2 is installed"
+elif dpkg -l | grep -qw "dnscrypt-proxy" 2>/dev/null; then
+    print_status "pass" "DNSCrypt-Proxy is installed"
+else
+    print_status "fail" "DNSCrypt-Proxy is not installed"
+fi
+check_package "macchanger" "MAC Changer"
     check_package "apparmor" "AppArmor"
     check_package "ufw" "UFW Firewall"
     check_package "bleachbit" "BleachBit"
@@ -216,7 +223,14 @@ main() {
     # Service Checks
     echo -e "${CYAN}━━━ Service Status ━━━${NC}"
     check_service "tor" "Tor"
-    check_service "dnscrypt-proxy" "DNSCrypt-Proxy"
+    # Check both dnscrypt-proxy service names
+    if systemctl is-active --quiet dnscrypt-proxy2 2>/dev/null; then
+        print_status "pass" "DNSCrypt-Proxy2 is running"
+    elif systemctl is-active --quiet dnscrypt-proxy 2>/dev/null; then
+        print_status "pass" "DNSCrypt-Proxy is running"
+    else
+        print_status "fail" "DNSCrypt-Proxy is not running" "Run: sudo systemctl start dnscrypt-proxy2"
+    fi
     check_service "apparmor" "AppArmor"
     echo ""
     

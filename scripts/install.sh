@@ -72,7 +72,6 @@ log "System update completed"
 log "Installing base privacy and security packages..."
 PACKAGES=(
     "tor"
-    "dnscrypt-proxy"
     "macchanger"
     "apparmor"
     "apparmor-utils"
@@ -87,6 +86,7 @@ PACKAGES=(
     "conky-all"
     "dnsutils"
     "coreutils"
+    "dnscrypt-proxy2"
 )
 
 for package in "${PACKAGES[@]}"; do
@@ -99,23 +99,28 @@ log "Base packages installation completed"
 # --- Step 3: Install ProtonVPN CLI ---
 log "Setting up ProtonVPN CLI..."
 
-# Download and install ProtonVPN repository
-log_info "Downloading ProtonVPN repository package..."
-cd /tmp
-wget -q https://repo.protonvpn.com/debian/dists/stable/main/binary-all/protonvpn-stable-release_1.0.3-3_all.deb
+# Install dependencies
+log_info "Installing ProtonVPN dependencies..."
+apt-get install -y -qq gnupg2 apt-transport-https ca-certificates >> "$LOG_FILE" 2>&1
 
-log_info "Installing ProtonVPN repository..."
-dpkg -i protonvpn-stable-release_1.0.3-3_all.deb >> "$LOG_FILE" 2>&1
+# Download and import ProtonVPN GPG key
+log_info "Adding ProtonVPN GPG key..."
+wget -qO /tmp/protonvpn_signing_key.asc https://repo.protonvpn.com/debian/public_key.asc
+gpg --dearmor < /tmp/protonvpn_signing_key.asc > /usr/share/keyrings/protonvpn-stable-archive-keyring.gpg
+rm -f /tmp/protonvpn_signing_key.asc
 
+# Add ProtonVPN repository
+log_info "Adding ProtonVPN repository..."
+echo "deb [signed-by=/usr/share/keyrings/protonvpn-stable-archive-keyring.gpg] https://repo.protonvpn.com/debian stable main" > /etc/apt/sources.list.d/protonvpn.list
+
+# Update package list
 log_info "Updating package list..."
 apt-get update -qq >> "$LOG_FILE" 2>&1
 
+# Install ProtonVPN packages
 log_info "Installing ProtonVPN packages..."
 apt-get install -y -qq proton-vpn-gnome-desktop >> "$LOG_FILE" 2>&1
 apt-get install -y -qq libayatana-appindicator3-1 gir1.2-ayatanaappindicator3-0.1 gnome-shell-extension-appindicator >> "$LOG_FILE" 2>&1 || log_warn "Some GUI packages failed to install (normal on non-GNOME systems)"
-
-# Cleanup
-rm -f /tmp/protonvpn-stable-release_1.0.3-3_all.deb
 
 log "ProtonVPN CLI installed successfully"
 
@@ -127,8 +132,9 @@ log "Tor service enabled and started"
 
 # --- Step 5: Configure DNSCrypt ---
 log "Configuring DNSCrypt-Proxy..."
-systemctl enable dnscrypt-proxy >> "$LOG_FILE" 2>&1
-systemctl start dnscrypt-proxy >> "$LOG_FILE" 2>&1
+# Try both dnscrypt-proxy and dnscrypt-proxy2 service names
+systemctl enable dnscrypt-proxy 2>/dev/null || systemctl enable dnscrypt-proxy2 >> "$LOG_FILE" 2>&1
+systemctl start dnscrypt-proxy 2>/dev/null || systemctl start dnscrypt-proxy2 >> "$LOG_FILE" 2>&1
 log "DNSCrypt-Proxy enabled and started"
 
 # --- Step 6: Configure Firewall (UFW) ---

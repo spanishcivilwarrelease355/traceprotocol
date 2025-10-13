@@ -63,8 +63,10 @@ pkill conky 2>/dev/null || true
 echo -e "${BLUE}Stopping services...${NC}"
 systemctl stop tor 2>/dev/null || true
 systemctl stop dnscrypt-proxy 2>/dev/null || true
+systemctl stop dnscrypt-proxy2 2>/dev/null || true
 systemctl disable tor 2>/dev/null || true
 systemctl disable dnscrypt-proxy 2>/dev/null || true
+systemctl disable dnscrypt-proxy2 2>/dev/null || true
 
 # Disable firewall
 echo -e "${BLUE}Disabling firewall...${NC}"
@@ -80,6 +82,7 @@ PACKAGES=(
     "gnome-shell-extension-appindicator"
     "tor"
     "dnscrypt-proxy"
+    "dnscrypt-proxy2"
     "macchanger"
     "apparmor-utils"
     "bleachbit"
@@ -103,6 +106,7 @@ echo -e "${GREEN}Packages removed${NC}"
 echo -e "${BLUE}Removing ProtonVPN repository...${NC}"
 apt remove --purge -y protonvpn-stable-release 2>/dev/null || true
 rm -f /etc/apt/sources.list.d/protonvpn* 2>/dev/null || true
+rm -f /usr/share/keyrings/protonvpn-stable-archive-keyring.gpg 2>/dev/null || true
 
 # Clean up configurations
 echo -e "${BLUE}Cleaning up configurations...${NC}"
