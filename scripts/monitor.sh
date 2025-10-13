@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Privacy & VPN Monitoring Script
+# TraceProtocol Monitoring Script
 # Monitors the status of all privacy and VPN tools
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -193,7 +193,7 @@ main() {
     clear
     echo ""
     echo "=========================================="
-    echo "   Privacy & VPN Status Monitor"
+    echo "     TraceProtocol Status Monitor"
     echo "=========================================="
     echo ""
     echo "Timestamp: $(date)"

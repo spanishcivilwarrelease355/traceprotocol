@@ -1,6 +1,8 @@
-# Privacy & VPN Manager 🔒
+# TraceProtocol 🔒
 
-A comprehensive privacy and VPN management tool for Linux systems (Debian/Ubuntu/Parrot OS). This tool automatically installs and configures ProtonVPN CLI along with essential privacy and security tools, and provides real-time monitoring of your privacy protection status.
+**Privacy & VPN Management Suite for Linux**
+
+A comprehensive privacy and VPN management tool for Linux systems (Debian/Ubuntu/Parrot OS). TraceProtocol automatically installs and configures ProtonVPN CLI along with essential privacy and security tools, and provides real-time monitoring of your privacy protection status.
 
 ## 🌟 Features
 
@@ -37,8 +39,8 @@ A comprehensive privacy and VPN management tool for Linux systems (Debian/Ubuntu
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/privacy-manager.git
-cd privacy-manager
+git clone https://github.com/yourusername/traceprotocol.git
+cd traceprotocol
 ```
 
 ### 2. Install All Privacy Tools
@@ -149,7 +151,7 @@ sudo ./privacy-manager.sh install
 ## 📁 Project Structure
 
 ```
-privacy-manager/
+traceprotocol/
 ├── privacy-manager.sh           # Main control script
 ├── scripts/
 │   ├── install.sh              # Installation script
@@ -337,6 +339,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
+**TraceProtocol** is built on top of these excellent privacy tools:
+
 - [ProtonVPN](https://protonvpn.com/) - Secure VPN service
 - [Tor Project](https://www.torproject.org/) - Anonymity network
 - [DNSCrypt](https://dnscrypt.info/) - DNS encryption
@@ -359,5 +363,11 @@ For issues, questions, or suggestions:
 
 ---
 
-**Stay Private. Stay Secure. Stay Anonymous.** 🔒
+<div align="center">
+
+**TraceProtocol - Stay Private. Stay Secure. Stay Anonymous.** 🔒
+
+*Protecting your digital footprint, one connection at a time.*
+
+</div>
 

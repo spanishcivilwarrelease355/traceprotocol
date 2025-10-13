@@ -1,6 +1,6 @@
-# Contributing to Privacy & VPN Manager
+# Contributing to TraceProtocol
 
-Thank you for considering contributing to Privacy & VPN Manager! This document provides guidelines and instructions for contributing.
+Thank you for considering contributing to TraceProtocol! This document provides guidelines and instructions for contributing.
 
 ## 🤝 How to Contribute
 
@@ -131,5 +131,5 @@ Contributors will be acknowledged in:
 - Release notes
 - GitHub contributors page
 
-Thank you for helping make Privacy & VPN Manager better! 🔒
+Thank you for helping make TraceProtocol better! 🔒
 

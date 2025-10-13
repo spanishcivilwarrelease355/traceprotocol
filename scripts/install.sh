@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Privacy & VPN Tools Installation Script
+# TraceProtocol Installation Script
 # Installs ProtonVPN CLI and essential privacy tools for Parrot OS / Debian-based systems
 
 set -e
@@ -45,7 +45,7 @@ mkdir -p "$SCRIPT_DIR/../logs"
 
 echo ""
 echo "========================================"
-echo "  Privacy & VPN Tools Installer"
+echo "      TraceProtocol Installer"
 echo "========================================"
 echo ""
 

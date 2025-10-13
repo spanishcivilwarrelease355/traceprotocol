@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Privacy Manager - Main Control Script
+# TraceProtocol - Privacy & VPN Management Suite
 # A comprehensive tool for managing VPN and privacy tools on Linux
 
 VERSION="1.0.0"
@@ -22,9 +22,9 @@ show_banner() {
     cat << "EOF"
 ╔═══════════════════════════════════════════════════════════╗
 ║                                                           ║
-║              Privacy & VPN Manager v1.0.0                 ║
+║                    TraceProtocol v1.0.0                   ║
 ║                                                           ║
-║          Comprehensive Privacy Protection Suite          ║
+║          Privacy & VPN Management Suite                  ║
 ║                                                           ║
 ╚═══════════════════════════════════════════════════════════╝
 EOF
@@ -64,7 +64,8 @@ show_help() {
 show_version() {
     show_banner
     echo -e "${GREEN}Version:${NC} $VERSION"
-    echo -e "${GREEN}Author:${NC} Privacy Tools Project"
+    echo -e "${GREEN}Project:${NC} TraceProtocol"
+    echo -e "${GREEN}Author:${NC} TraceProtocol Team"
     echo -e "${GREEN}License:${NC} MIT"
     echo ""
 }
