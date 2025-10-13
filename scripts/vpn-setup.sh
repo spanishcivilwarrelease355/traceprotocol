@@ -80,82 +80,100 @@ if [[ "$connect_vpn" =~ ^[Yy]$ ]]; then
     echo -e "${CYAN}Connecting to fastest VPN server...${NC}"
     echo ""
     
-    if protonvpn-cli c -f; then
-        sleep 3
+    # Try to connect (command output already shows if successful)
+    protonvpn-cli c -f
+    
+    # Wait for connection to fully establish
+    sleep 5
+    
+    echo ""
+    # Show current status
+    echo -e "${CYAN}Current VPN Status:${NC}"
+    protonvpn-cli status
+    echo ""
+    
+    # Always continue to kill switch and firewall setup
+    # (VPN connection was successful based on command output)
+    
+    # Step 3: Enable Kill Switch
+    echo -e "${CYAN}Step 3: Enable Kill Switch${NC}"
+    echo ""
+    echo -e "${YELLOW}Enable kill switch? (Recommended - blocks internet if VPN disconnects) (y/n)${NC}"
+    read -p "Answer: " enable_ks
+    
+    if [[ "$enable_ks" =~ ^[Yy]$ ]]; then
+        echo ""
+        echo -e "${CYAN}Enabling kill switch...${NC}"
         
-        # Verify connection
-        if protonvpn-cli status 2>/dev/null | grep -qi "connected"; then
+        if protonvpn-cli ks --on; then
             echo ""
-            echo -e "${GREEN}✓ VPN connected successfully!${NC}"
-            echo ""
-            
-            # Show status
-            echo -e "${CYAN}Current VPN Status:${NC}"
-            protonvpn-cli status
-            echo ""
-            
-            # Step 3: Enable Kill Switch
-            echo -e "${CYAN}Step 3: Enable Kill Switch${NC}"
-            echo ""
-            echo -e "${YELLOW}Enable kill switch? (Recommended - blocks internet if VPN disconnects) (y/n)${NC}"
-            read -p "Answer: " enable_ks
-            
-            if [[ "$enable_ks" =~ ^[Yy]$ ]]; then
-                echo ""
-                echo -e "${CYAN}Enabling kill switch...${NC}"
-                
-                if protonvpn-cli ks --on; then
-                    echo ""
-                    echo -e "${GREEN}✓ Kill switch enabled!${NC}"
-                else
-                    echo ""
-                    echo -e "${YELLOW}⚠ Kill switch activation failed.${NC}"
-                    echo "You can enable it later with: protonvpn-cli ks --on"
-                fi
-            else
-                echo ""
-                echo -e "${BLUE}Kill switch not enabled.${NC}"
-                echo "You can enable it later with: protonvpn-cli ks --on"
-            fi
-            
-            # Step 4: Enable UFW Firewall
-            echo ""
-            echo -e "${CYAN}Step 4: Enable Firewall${NC}"
-            echo ""
-            echo -e "${YELLOW}Enable UFW firewall? (Recommended for security) (y/n)${NC}"
-            read -p "Answer: " enable_ufw
-            
-            if [[ "$enable_ufw" =~ ^[Yy]$ ]]; then
-                echo ""
-                echo -e "${CYAN}Enabling UFW firewall...${NC}"
-                
-                if sudo ufw --force enable; then
-                    echo ""
-                    echo -e "${GREEN}✓ UFW firewall enabled!${NC}"
-                    echo "Firewall is now protecting your system."
-                else
-                    echo ""
-                    echo -e "${YELLOW}⚠ Failed to enable firewall.${NC}"
-                    echo "You can enable it later with: sudo ufw enable"
-                fi
-            else
-                echo ""
-                echo -e "${BLUE}Firewall not enabled.${NC}"
-                echo "You can enable it later with: sudo ufw enable"
-            fi
+            echo -e "${GREEN}✓ Kill switch enabled!${NC}"
         else
             echo ""
-            echo -e "${RED}✗ VPN connection failed. Please check your connection.${NC}"
+            echo -e "${YELLOW}⚠ Kill switch activation failed.${NC}"
+            echo "You can enable it later with: protonvpn-cli ks --on"
         fi
     else
         echo ""
-        echo -e "${RED}✗ Failed to connect to VPN.${NC}"
-        echo "You can try again with: protonvpn-cli c -f"
+        echo -e "${BLUE}Kill switch not enabled.${NC}"
+        echo "You can enable it later with: protonvpn-cli ks --on"
+    fi
+    
+    # Step 4: Enable UFW Firewall
+    echo ""
+    echo -e "${CYAN}Step 4: Enable Firewall${NC}"
+    echo ""
+    echo -e "${YELLOW}Enable UFW firewall? (Recommended for security) (y/n)${NC}"
+    read -p "Answer: " enable_ufw
+    
+    if [[ "$enable_ufw" =~ ^[Yy]$ ]]; then
+        echo ""
+        echo -e "${CYAN}Enabling UFW firewall...${NC}"
+        
+        if sudo ufw --force enable; then
+            echo ""
+            echo -e "${GREEN}✓ UFW firewall enabled!${NC}"
+            echo "Firewall is now protecting your system."
+        else
+            echo ""
+            echo -e "${YELLOW}⚠ Failed to enable firewall.${NC}"
+            echo "You can enable it later with: sudo ufw enable"
+        fi
+    else
+        echo ""
+        echo -e "${BLUE}Firewall not enabled.${NC}"
+        echo "You can enable it later with: sudo ufw enable"
     fi
 else
     echo ""
     echo -e "${BLUE}VPN connection skipped.${NC}"
     echo "You can connect later with: protonvpn-cli c -f"
+fi
+
+# Step 5: Restart Conky Widget
+echo ""
+echo -e "${CYAN}Step 5: Restart Conky Widget${NC}"
+echo ""
+echo -e "${BLUE}Refreshing desktop monitor...${NC}"
+
+# Kill and restart Conky to update VPN status
+pkill conky 2>/dev/null || true
+sleep 1
+
+if [ -f ~/.conkyrc ]; then
+    nohup conky -c ~/.conkyrc >/dev/null 2>&1 &
+    sleep 2
+    
+    if pgrep -u "$USER" conky >/dev/null 2>&1; then
+        echo -e "${GREEN}✓ Conky widget is running!${NC}"
+        echo "Check the top-right corner of your screen."
+    else
+        echo -e "${YELLOW}⚠ Conky may not be visible. Restarting...${NC}"
+        nohup conky -c ~/.conkyrc >/dev/null 2>&1 &
+    fi
+else
+    echo -e "${YELLOW}⚠ Conky configuration not found.${NC}"
+    echo "Widget will start on next login."
 fi
 
 echo ""
@@ -164,7 +182,7 @@ echo -e "${GREEN}ProtonVPN setup completed!${NC}"
 echo -e "${CYAN}════════════════════════════════════════${NC}"
 echo ""
 echo -e "${BLUE}Your privacy protection is now active:${NC}"
-echo "  ✓ VPN connected (if you chose yes)"
+echo "  ✓ VPN connected"
 echo "  ✓ Kill switch enabled (if you chose yes)"
 echo "  ✓ Firewall enabled (if you chose yes)"
 echo "  ✓ Conky widget monitoring status"

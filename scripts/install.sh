@@ -412,16 +412,28 @@ fi
 echo ""
 log "Starting Conky desktop widget..."
 
-if [ -f "/home/$SUDO_USER/.conkyrc" ]; then
+if [ -f "/home/$SUDO_USER/.conkyrc" ] && [ -n "$SUDO_USER" ]; then
     # Kill existing Conky instances
-    pkill conky 2>/dev/null || true
+    sudo -u "$SUDO_USER" pkill conky 2>/dev/null || true
     sleep 1
     
-    # Start Conky as the actual user (not root)
-    if [ -n "$SUDO_USER" ]; then
-        sudo -u "$SUDO_USER" DISPLAY=:0 conky -c "/home/$SUDO_USER/.conkyrc" &
-        log "${GREEN}Conky widget started!${NC}"
+    # Get user's display and environment
+    USER_DISPLAY=$(w -h "$SUDO_USER" | awk '{print $3; exit}')
+    if [ -z "$USER_DISPLAY" ]; then
+        USER_DISPLAY=":0"
+    fi
+    
+    # Start Conky as the actual user with proper environment
+    sudo -u "$SUDO_USER" DISPLAY="$USER_DISPLAY" nohup conky -c "/home/$SUDO_USER/.conkyrc" >/dev/null 2>&1 &
+    
+    sleep 2
+    
+    # Verify Conky is running
+    if pgrep -u "$SUDO_USER" conky >/dev/null 2>&1; then
+        log "${GREEN}Conky widget started successfully!${NC}"
         log_info "Look at the top-right corner of your screen for the TraceProtocol monitor"
+    else
+        log_warn "Conky widget may not have started. It will auto-start on next login."
     fi
 else
     log_warn "Conky configuration not found. Widget will start on next login."
