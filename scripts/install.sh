@@ -136,16 +136,18 @@ systemctl enable dnscrypt-proxy 2>/dev/null || systemctl enable dnscrypt-proxy2 
 systemctl start dnscrypt-proxy 2>/dev/null || systemctl start dnscrypt-proxy2 >> "$LOG_FILE" 2>&1
 log "DNSCrypt-Proxy enabled and started"
 
-# --- Step 6: Configure Firewall (UFW) - Enable it first ---
-log "Configuring UFW firewall..."
-# Enable UFW before ProtonVPN setup
-ufw --force enable >> "$LOG_FILE" 2>&1
+# --- Step 6: Configure Firewall (UFW) - Configure but keep disabled ---
+log "Configuring UFW firewall rules..."
+# Configure UFW rules but keep it DISABLED for now
+# It will be enabled after ProtonVPN is connected
 ufw default deny incoming >> "$LOG_FILE" 2>&1
 ufw default allow outgoing >> "$LOG_FILE" 2>&1
-# Allow DNS for ProtonVPN
+# Allow necessary ports
 ufw allow out 53 >> "$LOG_FILE" 2>&1
 ufw allow out 443 >> "$LOG_FILE" 2>&1
-log "Firewall configured and enabled"
+ufw allow out 1194 >> "$LOG_FILE" 2>&1
+ufw allow out 5060 >> "$LOG_FILE" 2>&1
+log "Firewall rules configured (will be enabled after VPN setup)"
 
 # --- Step 7: Enable AppArmor ---
 log "Enabling AppArmor..."
@@ -392,6 +394,10 @@ if command -v protonvpn-cli &>/dev/null; then
     echo "  1. Login to ProtonVPN with your credentials"
     echo "  2. Connect to the fastest VPN server"
     echo "  3. Enable the kill switch"
+    echo "  4. Enable UFW firewall"
+    echo ""
+    echo -e "${YELLOW}Note: UFW firewall is configured but DISABLED${NC}"
+    echo "      It will be enabled after VPN connection"
     echo ""
     echo -e "${CYAN}════════════════════════════════════════${NC}"
     echo ""
@@ -426,17 +432,25 @@ echo "========================================"
 log "${GREEN}Installation completed successfully!${NC}"
 echo "========================================"
 echo ""
-log_info "TraceProtocol is now installed and configured!"
+log_info "TraceProtocol base installation is complete!"
 echo ""
-log_info "ProtonVPN Setup:"
-echo "  • If you skipped VPN setup, run (WITHOUT sudo):"
-echo "    ./scripts/vpn-setup.sh"
+echo -e "${YELLOW}⚠ NEXT STEP REQUIRED:${NC}"
+echo ""
+echo -e "${GREEN}Run the VPN setup (WITHOUT sudo):${NC}"
+echo "  ./privacy-manager.sh vpn-setup"
+echo ""
+echo "This will configure ProtonVPN, connect to VPN, and enable firewall."
+echo ""
+log_info "What's installed:"
+echo "  ✓ ProtonVPN CLI"
+echo "  ✓ Tor, DNSCrypt, AppArmor"
+echo "  ✓ Privacy tools (macchanger, firejail, bleachbit)"
+echo "  ✓ Conky desktop widget"
+echo "  ✓ UFW firewall (configured, not yet enabled)"
 echo ""
 log_info "Quick commands:"
+echo "  • Setup VPN: ./privacy-manager.sh vpn-setup (NO sudo!)"
 echo "  • Check status: ./privacy-manager.sh monitor"
-echo "  • Connect VPN: protonvpn-cli c -f"
-echo "  • Disconnect VPN: protonvpn-cli d"
-echo "  • VPN status: protonvpn-cli status"
 echo "  • View all commands: ./privacy-manager.sh help"
 echo ""
 log_info "Desktop Widget:"
@@ -446,6 +460,13 @@ echo "  • Restart: pkill conky && conky -c ~/.conkyrc &"
 echo ""
 log_info "Log file saved to: $LOG_FILE"
 echo ""
-log_warn "Note: A system reboot is recommended to apply all changes."
+echo -e "${YELLOW}════════════════════════════════════════${NC}"
+echo -e "${YELLOW}   DON'T REBOOT YET!${NC}"
+echo -e "${YELLOW}════════════════════════════════════════${NC}"
+echo ""
+echo "Please run the VPN setup first:"
+echo -e "${GREEN}  ./privacy-manager.sh vpn-setup${NC}"
+echo ""
+echo "After VPN setup is complete, you can reboot if needed."
 echo ""
 

@@ -117,6 +117,32 @@ if [[ "$connect_vpn" =~ ^[Yy]$ ]]; then
                 echo -e "${BLUE}Kill switch not enabled.${NC}"
                 echo "You can enable it later with: protonvpn-cli ks --on"
             fi
+            
+            # Step 4: Enable UFW Firewall
+            echo ""
+            echo -e "${CYAN}Step 4: Enable Firewall${NC}"
+            echo ""
+            echo -e "${YELLOW}Enable UFW firewall? (Recommended for security) (y/n)${NC}"
+            read -p "Answer: " enable_ufw
+            
+            if [[ "$enable_ufw" =~ ^[Yy]$ ]]; then
+                echo ""
+                echo -e "${CYAN}Enabling UFW firewall...${NC}"
+                
+                if sudo ufw --force enable; then
+                    echo ""
+                    echo -e "${GREEN}✓ UFW firewall enabled!${NC}"
+                    echo "Firewall is now protecting your system."
+                else
+                    echo ""
+                    echo -e "${YELLOW}⚠ Failed to enable firewall.${NC}"
+                    echo "You can enable it later with: sudo ufw enable"
+                fi
+            else
+                echo ""
+                echo -e "${BLUE}Firewall not enabled.${NC}"
+                echo "You can enable it later with: sudo ufw enable"
+            fi
         else
             echo ""
             echo -e "${RED}✗ VPN connection failed. Please check your connection.${NC}"
@@ -137,11 +163,21 @@ echo -e "${CYAN}═════════════════════�
 echo -e "${GREEN}ProtonVPN setup completed!${NC}"
 echo -e "${CYAN}════════════════════════════════════════${NC}"
 echo ""
+echo -e "${BLUE}Your privacy protection is now active:${NC}"
+echo "  ✓ VPN connected (if you chose yes)"
+echo "  ✓ Kill switch enabled (if you chose yes)"
+echo "  ✓ Firewall enabled (if you chose yes)"
+echo "  ✓ Conky widget monitoring status"
+echo ""
 echo -e "${YELLOW}Quick commands:${NC}"
-echo "  • Connect VPN:    protonvpn-cli c -f"
-echo "  • Disconnect:     protonvpn-cli d"
-echo "  • Status:         protonvpn-cli status"
-echo "  • Kill switch on: protonvpn-cli ks --on"
+echo "  • Connect VPN:     protonvpn-cli c -f"
+echo "  • Disconnect:      protonvpn-cli d"
+echo "  • Status:          protonvpn-cli status"
+echo "  • Full monitor:    ./privacy-manager.sh monitor"
+echo "  • Kill switch on:  protonvpn-cli ks --on"
 echo "  • Kill switch off: protonvpn-cli ks --off"
+echo "  • Enable firewall: sudo ufw enable"
+echo ""
+echo -e "${GREEN}Check the Conky widget in the top-right corner for live status!${NC}"
 echo ""
 
