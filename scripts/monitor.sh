@@ -155,16 +155,14 @@ check_firewall() {
 
 # Function to check DNS configuration
 check_dns() {
-    # Check if DNSCrypt-Proxy is running (provides encrypted DNS)
-    local dnscrypt_status=$(systemctl is-active dnscrypt-proxy 2>/dev/null)
+    # This check is now integrated with DNSCrypt service check above
+    # Just show additional DNS info
+    local dns_nameserver=$(grep '^nameserver' /etc/resolv.conf 2>/dev/null | head -1 | awk '{print $2}')
     
-    if grep -q "nameserver 127.0.0.1" /etc/resolv.conf 2>/dev/null; then
-        print_status "pass" "DNS configured to use DNSCrypt-Proxy" "Encrypted DNS queries"
-    elif [[ "$dnscrypt_status" == "active" ]] || [[ "$dnscrypt_status" == "activating" ]]; then
-        # DNSCrypt is running, even if not set as system DNS, it's still providing encrypted DNS
-        print_status "pass" "DNSCrypt-Proxy is running" "DNS encryption available"
+    if [ "$dns_nameserver" = "127.0.0.1" ]; then
+        print_status "pass" "System DNS configured for encryption" "nameserver 127.0.0.1"
     else
-        print_status "warn" "Encrypted DNS not configured" "DNSCrypt-Proxy not running"
+        print_status "info" "System DNS server" "$dns_nameserver"
     fi
 }
 
@@ -266,13 +264,18 @@ check_package "macchanger" "MAC Changer"
     # Service Checks
     echo -e "${CYAN}━━━ Service Status ━━━${NC}"
     check_service "tor" "Tor"
-    # Check DNSCrypt-Proxy service
+    # Check DNSCrypt-Proxy service AND configuration
     local dnscrypt_status=$(systemctl is-active dnscrypt-proxy 2>/dev/null)
+    local dns_nameserver=$(grep '^nameserver' /etc/resolv.conf 2>/dev/null | head -1 | awk '{print $2}')
     
-    # Consider both "active" and "activating" as running
+    # Check if both service is running AND DNS is configured
     if [[ "$dnscrypt_status" == "active" ]] || [[ "$dnscrypt_status" == "activating" ]]; then
-        local uptime=$(systemctl show dnscrypt-proxy -p ActiveEnterTimestamp --value 2>/dev/null)
-        print_status "pass" "DNSCrypt-Proxy is running" "Since: $uptime"
+        if [ "$dns_nameserver" = "127.0.0.1" ]; then
+            local uptime=$(systemctl show dnscrypt-proxy -p ActiveEnterTimestamp --value 2>/dev/null)
+            print_status "pass" "DNSCrypt-Proxy is active and configured" "DNS: 127.0.0.1 | Since: $uptime"
+        else
+            print_status "warn" "DNSCrypt-Proxy running but not configured" "DNS: $dns_nameserver (should be 127.0.0.1) | Run: sudo ./trace-protocol.sh dnscrypt-config"
+        fi
     else
         print_status "fail" "DNSCrypt-Proxy is not running" "Run: sudo systemctl start dnscrypt-proxy"
     fi
