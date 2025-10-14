@@ -61,6 +61,7 @@ show_help() {
     echo -e "  ${CYAN}firewall-on${NC}      - Enable UFW firewall"
     echo -e "  ${CYAN}firewall-off${NC}     - Disable UFW firewall"
     echo -e "  ${CYAN}firewall-config${NC}  - Reconfigure UFW rules"
+    echo -e "  ${CYAN}dnscrypt-config${NC}  - Configure DNSCrypt DNS (127.0.0.1)"
     echo -e "  ${CYAN}start-services${NC}   - Start all privacy services"
     echo -e "  ${CYAN}stop-services${NC}    - Stop all privacy services"
     echo -e "  ${CYAN}clean-logs${NC}       - Clean old log files"
@@ -331,6 +332,12 @@ cmd_firewall_config() {
     sudo bash "$SCRIPT_DIR/scripts/configure-ufw.sh"
 }
 
+# Configure DNSCrypt
+cmd_dnscrypt_config() {
+    check_script "configure-dnscrypt.sh"
+    sudo bash "$SCRIPT_DIR/scripts/configure-dnscrypt.sh"
+}
+
 # Clean logs
 cmd_clean_logs() {
     show_banner
@@ -394,6 +401,9 @@ main() {
             ;;
         firewall-config)
             cmd_firewall_config
+            ;;
+        dnscrypt-config)
+            cmd_dnscrypt_config
             ;;
         start-services)
             cmd_start_services
