@@ -146,10 +146,21 @@ check_firewall() {
     local ufw_status=$($ufw_cmd status 2>/dev/null || sudo $ufw_cmd status 2>/dev/null | head -1)
     
     if echo "$ufw_status" | grep -qi "active"; then
-        local rules=$($ufw_cmd status numbered 2>/dev/null || sudo $ufw_cmd status numbered 2>/dev/null | grep -c "^\[")
+        # Count rules (UFW numbered format has spaces before bracket: "     [ 1]")
+        local rules=$($ufw_cmd status numbered 2>/dev/null || sudo $ufw_cmd status numbered 2>/dev/null | grep -c "^ *\[")
         print_status "pass" "UFW firewall is active" "$rules rules configured"
     else
-        print_status "warn" "UFW firewall is inactive" "Run: sudo ufw enable"
+        # UFW is inactive - check if rules are configured
+        if [ -f /etc/ufw/user.rules ]; then
+            local configured_rules=$(grep -c "^-A ufw-user-output" /etc/ufw/user.rules 2>/dev/null || echo "0")
+            if [ "$configured_rules" -gt 0 ]; then
+                print_status "warn" "UFW firewall is inactive" "Configured but not enabled | $configured_rules rules ready | Run: sudo ufw enable"
+            else
+                print_status "warn" "UFW firewall is inactive" "Run: sudo ufw enable"
+            fi
+        else
+            print_status "warn" "UFW firewall is inactive" "Run: sudo ufw enable"
+        fi
     fi
 }
 
