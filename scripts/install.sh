@@ -23,7 +23,7 @@ MAGENTA='\033[0;35m'
 NC='\033[0m' # No Color
 
 # Progress tracking
-TOTAL_STEPS=13
+TOTAL_STEPS=12
 CURRENT_STEP=0
 
 # Function to show dynamic progress bar (updates in place)
@@ -139,7 +139,6 @@ PACKAGES=(
     "firejail"
     "curl"
     "wget"
-    "ufw"
     "iptables"
     "dnsmasq"
     "torbrowser-launcher"
@@ -328,40 +327,8 @@ systemctl restart NetworkManager >> "$LOG_FILE" 2>&1
 
 sleep 0.5
 
-# --- Step 7: Configure Firewall (UFW) - Configure but keep disabled ---
+# --- Step 7: Enable AppArmor ---
 CURRENT_STEP=7
-show_progress $CURRENT_STEP $TOTAL_STEPS "Configuring UFW firewall"
-echo "[$(date +%Y-%m-%d\ %H:%M:%S)] Configuring UFW firewall rules..." >> "$LOG_FILE"
-# Configure UFW rules but keep it DISABLED for now
-# It will be enabled after ProtonVPN is connected
-ufw --force reset >> "$LOG_FILE" 2>&1
-ufw default deny incoming >> "$LOG_FILE" 2>&1
-ufw default allow outgoing >> "$LOG_FILE" 2>&1
-
-# Allow essential outgoing connections
-ufw allow out 53 >> "$LOG_FILE" 2>&1       # DNS
-ufw allow out 80 >> "$LOG_FILE" 2>&1       # HTTP
-ufw allow out 443 >> "$LOG_FILE" 2>&1      # HTTPS
-ufw allow out 1194 >> "$LOG_FILE" 2>&1     # OpenVPN
-ufw allow out 5060 >> "$LOG_FILE" 2>&1     # ProtonVPN alt port
-ufw allow out 9418 >> "$LOG_FILE" 2>&1     # Git
-ufw allow out 22 >> "$LOG_FILE" 2>&1       # SSH
-ufw allow out 21 >> "$LOG_FILE" 2>&1       # FTP
-ufw allow out 20 >> "$LOG_FILE" 2>&1       # FTP Data
-ufw allow out 25 >> "$LOG_FILE" 2>&1       # SMTP
-ufw allow out 587 >> "$LOG_FILE" 2>&1      # SMTP Submission
-ufw allow out 465 >> "$LOG_FILE" 2>&1      # SMTPS
-ufw allow out 993 >> "$LOG_FILE" 2>&1      # IMAPS
-ufw allow out 995 >> "$LOG_FILE" 2>&1      # POP3S
-
-# Allow established connections
-ufw logging off >> "$LOG_FILE" 2>&1
-
-echo "[$(date +%Y-%m-%d\ %H:%M:%S)] Firewall rules configured (will be enabled after VPN setup)" >> "$LOG_FILE"
-sleep 0.5
-
-# --- Step 8: Enable AppArmor ---
-CURRENT_STEP=8
 show_progress $CURRENT_STEP $TOTAL_STEPS "Enabling AppArmor security"
 echo "[$(date +%Y-%m-%d\ %H:%M:%S)] Enabling AppArmor..." >> "$LOG_FILE"
 systemctl enable apparmor >> "$LOG_FILE" 2>&1
@@ -373,8 +340,8 @@ sleep 0.5
 # User opted out of installing messaging apps
 # To install manually: apt install signal-desktop telegram-desktop
 
-# --- Step 9: Save Original MAC Address ---
-CURRENT_STEP=9
+# --- Step 8: Save Original MAC Address ---
+CURRENT_STEP=8
 show_progress $CURRENT_STEP $TOTAL_STEPS "Saving original MAC address"
 echo "[$(date +%Y-%m-%d\ %H:%M:%S)] Saving original MAC address..." >> "$LOG_FILE"
 
@@ -396,8 +363,8 @@ if [ -n "$PRIMARY_INTERFACE" ]; then
 fi
 sleep 0.5
 
-# --- Step 10: Create configuration file ---
-CURRENT_STEP=10
+# --- Step 9: Create configuration file ---
+CURRENT_STEP=9
 show_progress $CURRENT_STEP $TOTAL_STEPS "Creating configuration files"
 echo "[$(date +%Y-%m-%d\ %H:%M:%S)] Creating configuration file..." >> "$LOG_FILE"
 cat > "$SCRIPT_DIR/../privacy-tools.conf" << 'EOF'
@@ -421,8 +388,8 @@ EOF
 echo "[$(date +%Y-%m-%d\ %H:%M:%S)] Configuration file created at $SCRIPT_DIR/../privacy-tools.conf" >> "$LOG_FILE"
 sleep 0.5
 
-# --- Step 11: Create Conky Configuration ---
-CURRENT_STEP=11
+# --- Step 10: Create Conky Configuration ---
+CURRENT_STEP=10
 show_progress $CURRENT_STEP $TOTAL_STEPS "Creating Conky widget"
 echo "[$(date +%Y-%m-%d\ %H:%M:%S)] Creating Conky desktop widget configuration..." >> "$LOG_FILE"
 
@@ -521,7 +488,6 @@ ${color4}${font DejaVu Sans Mono:size=10:bold}━━━ SECURITY STATUS ━━�
 ${color}Kill Switch: ${exec bash -c 'ks=$(protonvpn-cli status 2>/dev/null | grep "Kill switch:"); if echo "$ks" | grep -qi "On"; then echo "${color1}✓ Enabled"; else echo "${color3}○ Disabled"; fi'}
 ${color}Tor: ${if_running tor}${color1}✓ Running${else}${color2}✗ Stopped${endif}
 ${color}DNSCrypt: ${exec bash -c 'if systemctl is-active --quiet dnscrypt-proxy 2>/dev/null; then echo "${color1}✓ Active"; else echo "${color2}✗ Inactive"; fi'}
-${color}Firewall: ${exec bash -c 'if sudo ufw status 2>/dev/null | grep -qi "Status: active"; then echo "${color1}✓ Active"; else echo "${color2}✗ Inactive"; fi'}
 
 ${color4}${font DejaVu Sans Mono:size=10:bold}━━━ SYSTEM STATUS ━━━${font}
 ${color}CPU: ${color4}${cpu}%  ${color}${cpubar 6}
@@ -567,16 +533,16 @@ else
 fi
 sleep 0.5
 
-# --- Step 12: Cleanup ---
-CURRENT_STEP=12
+# --- Step 11: Cleanup ---
+CURRENT_STEP=11
 show_progress $CURRENT_STEP $TOTAL_STEPS "Cleaning up"
 echo "[$(date +%Y-%m-%d\ %H:%M:%S)] Running cleanup..." >> "$LOG_FILE"
 apt autoremove -y -qq >> "$LOG_FILE" 2>&1
 apt clean -qq >> "$LOG_FILE" 2>&1
 sleep 0.5
 
-# --- Step 13: Start Conky Widget ---
-CURRENT_STEP=13
+# --- Step 12: Start Conky Widget ---
+CURRENT_STEP=12
 show_progress $CURRENT_STEP $TOTAL_STEPS "Starting Conky widget"
 echo "[$(date +%Y-%m-%d\ %H:%M:%S)] Starting Conky desktop widget..." >> "$LOG_FILE"
 
@@ -626,7 +592,6 @@ echo -e "  ${GREEN}✓${NC}  ProtonVPN CLI"
 echo -e "  ${GREEN}✓${NC}  Tor, DNSCrypt-Proxy (DNS: 127.0.0.1), AppArmor"
 echo -e "  ${GREEN}✓${NC}  Privacy tools (macchanger, firejail, bleachbit)"
 echo -e "  ${GREEN}✓${NC}  Conky desktop widget (top-right corner)"
-echo -e "  ${GREEN}✓${NC}  UFW firewall (configured, not yet enabled)"
 echo -e "  ${GREEN}✓${NC}  DNS encryption via DNSCrypt-Proxy (nameserver 127.0.0.1)"
 echo ""
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -641,7 +606,7 @@ echo -e "  This will:"
 echo -e "    1. Login to ProtonVPN with your credentials"
 echo -e "    2. Connect to the fastest VPN server"
 echo -e "    3. Enable kill switch"
-echo -e "    4. Optionally enable UFW firewall"
+echo -e "    4. Configure DNSCrypt-Proxy for encrypted DNS"
 echo ""
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "${CYAN}  Quick Commands${NC}"

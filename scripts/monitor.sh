@@ -129,32 +129,6 @@ check_protonvpn() {
     fi
 }
 
-# Function to check firewall status
-check_firewall() {
-    # Check if UFW is installed (check both command and binary location)
-    if ! command -v ufw &>/dev/null && [ ! -f /usr/sbin/ufw ]; then
-        print_status "fail" "UFW is not installed"
-        return
-    fi
-    
-    # Check UFW status (use full path if needed)
-    local ufw_cmd="ufw"
-    if [ -f /usr/sbin/ufw ]; then
-        ufw_cmd="/usr/sbin/ufw"
-    fi
-    
-    local ufw_status=$($ufw_cmd status 2>/dev/null || sudo $ufw_cmd status 2>/dev/null | head -1)
-    
-    if echo "$ufw_status" | grep -qi "active"; then
-        # Count rules (UFW numbered format has spaces before bracket: "     [ 1]")
-        local rules=$($ufw_cmd status numbered 2>/dev/null || sudo $ufw_cmd status numbered 2>/dev/null | grep -c "^ *\[")
-        print_status "pass" "UFW firewall is active" "$rules rules configured"
-    else
-        # UFW is inactive
-        print_status "warn" "UFW firewall is inactive" "Rules will be configured on first enable | Run: sudo ufw enable or ./trace-protocol.sh firewall-on"
-    fi
-}
-
 # Function to check DNS configuration
 check_dns() {
     # This check is now integrated with DNSCrypt service check above
@@ -256,7 +230,6 @@ else
 fi
 check_package "macchanger" "MAC Changer"
     check_package "apparmor" "AppArmor"
-    check_package "ufw" "UFW Firewall"
     check_package "bleachbit" "BleachBit"
     check_package "firejail" "Firejail"
     check_package "torbrowser-launcher" "Tor Browser"
@@ -291,7 +264,6 @@ check_package "macchanger" "MAC Changer"
     
     # Security Checks
     echo -e "${CYAN}━━━ Security Configuration ━━━${NC}"
-    check_firewall
     check_dns
     check_mac_randomization
     echo ""

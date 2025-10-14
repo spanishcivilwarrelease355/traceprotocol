@@ -198,7 +198,7 @@ if [[ "$connect_vpn" =~ ^[Yy]$ ]]; then
         echo ""
     fi
     
-    # Always continue to kill switch and firewall setup
+    # Always continue to kill switch and DNSCrypt setup
     # (VPN connection was successful based on command output)
     
     # Step 3: Enable Kill Switch
@@ -262,71 +262,15 @@ if [[ "$connect_vpn" =~ ^[Yy]$ ]]; then
         fi
         echo ""
     fi
-    
-    # Step 5: Enable UFW Firewall
-    echo ""
-    echo -e "${CYAN}Step 5: Enable Firewall${NC}"
-    echo ""
-    
-    # Check if UFW is already enabled
-    echo -e "${BLUE}Checking firewall status...${NC}"
-    UFW_STATUS=$(sudo ufw status 2>/dev/null || echo "inactive")
-    
-    if echo "$UFW_STATUS" | grep -qi "status:.*active\|active"; then
-        echo -e "${GREEN}✓ UFW firewall is already enabled${NC}"
-        echo ""
-        sudo ufw status verbose
-        echo ""
-    else
-        echo -e "${YELLOW}Enable UFW firewall?${NC}"
-        echo ""
-        echo -e "${BLUE}Note:${NC} UFW provides extra security but may block some applications"
-        echo "(like Cursor IDE, development servers, etc.)"
-        echo ""
-        echo -e "${CYAN}Options:${NC}"
-        echo "  y - Enable UFW (more secure, may block some apps)"
-        echo "  n - Skip UFW (less secure, all apps work)"
-        echo ""
-        read -p "Enable UFW? (y/n): " enable_ufw
-        
-        if [[ "$enable_ufw" =~ ^[Yy]$ ]]; then
-            echo ""
-            echo -e "${CYAN}Enabling UFW firewall...${NC}"
-            
-            if sudo ufw --force enable; then
-                echo ""
-                echo -e "${GREEN}✓ UFW firewall enabled!${NC}"
-                echo ""
-                sudo ufw status verbose
-                echo ""
-                echo -e "${YELLOW}If some applications stop working:${NC}"
-                echo "  • Disable UFW: ./trace-protocol.sh firewall-off"
-                echo "  • Check status: sudo ufw status"
-                echo "  • Reconfigure: ./trace-protocol.sh firewall-config"
-            else
-                echo ""
-                echo -e "${YELLOW}⚠ Failed to enable firewall.${NC}"
-                echo "You can enable it later with: sudo ufw enable"
-            fi
-        else
-            echo ""
-            echo -e "${BLUE}Firewall not enabled.${NC}"
-            echo ""
-            echo -e "${YELLOW}Your VPN and kill switch still protect you,${NC}"
-            echo "but UFW provides an additional security layer."
-            echo ""
-            echo "Enable later with: ./trace-protocol.sh firewall-on"
-        fi
-    fi
 else
     echo ""
     echo -e "${BLUE}VPN connection skipped.${NC}"
     echo "You can connect later with: protonvpn-cli c -f"
 fi
 
-# Step 6: Restart Conky Widget
+# Step 5: Restart Conky Widget
 echo ""
-echo -e "${CYAN}Step 6: Restart Conky Widget${NC}"
+echo -e "${CYAN}Step 5: Restart Conky Widget${NC}"
 echo ""
 echo -e "${BLUE}Refreshing desktop monitor...${NC}"
 
@@ -359,7 +303,6 @@ echo -e "${BLUE}Your privacy protection is now active:${NC}"
 echo "  ✓ VPN connected"
 echo "  ✓ Kill switch enabled (if you chose yes)"
 echo "  ✓ DNSCrypt-Proxy encrypting DNS queries"
-echo "  ✓ Firewall enabled (if you chose yes)"
 echo "  ✓ Conky widget monitoring status"
 echo ""
 echo -e "${YELLOW}Quick commands:${NC}"
@@ -369,7 +312,6 @@ echo "  • Status:          protonvpn-cli status"
 echo "  • Full monitor:    ./trace-protocol.sh monitor"
 echo "  • Kill switch on:  protonvpn-cli ks --on"
 echo "  • Kill switch off: protonvpn-cli ks --off"
-echo "  • Enable firewall: sudo ufw enable"
 echo ""
 echo -e "${GREEN}Check the Conky widget in the top-right corner for live status!${NC}"
 echo ""

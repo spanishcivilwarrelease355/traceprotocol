@@ -17,7 +17,7 @@ MAGENTA='\033[0;35m'
 NC='\033[0m'
 
 # Progress tracking
-TOTAL_STEPS=8
+TOTAL_STEPS=7
 CURRENT_STEP=0
 
 # Function to show dynamic progress bar (updates in place)
@@ -180,14 +180,8 @@ systemctl daemon-reload 2>/dev/null || true
 
 sleep 0.3
 
-# Step 4: Disable Firewall
+# Step 4: Remove Packages
 CURRENT_STEP=4
-show_progress $CURRENT_STEP $TOTAL_STEPS "Disabling firewall"
-ufw disable >/dev/null 2>&1 || true
-sleep 0.3
-
-# Step 5: Remove Packages
-CURRENT_STEP=5
 show_progress $CURRENT_STEP $TOTAL_STEPS "Removing packages"
 
 PACKAGES=(
@@ -210,16 +204,16 @@ for package in "${PACKAGES[@]}"; do
 done
 sleep 0.3
 
-# Step 6: Remove ProtonVPN Repository
-CURRENT_STEP=6
+# Step 5: Remove ProtonVPN Repository
+CURRENT_STEP=5
 show_progress $CURRENT_STEP $TOTAL_STEPS "Removing repository"
 DEBIAN_FRONTEND=noninteractive apt-get remove --purge -y protonvpn-stable-release >/dev/null 2>&1 || true
 rm -f /etc/apt/sources.list.d/protonvpn* 2>/dev/null || true
 rm -f /usr/share/keyrings/protonvpn-stable-archive-keyring.gpg 2>/dev/null || true
 sleep 0.3
 
-# Step 7: Clean Configurations
-CURRENT_STEP=7
+# Step 6: Clean Configurations
+CURRENT_STEP=6
 show_progress $CURRENT_STEP $TOTAL_STEPS "Cleaning configurations"
 rm -rf /etc/protonvpn 2>/dev/null || true
 
@@ -252,8 +246,8 @@ fi
 rm -rf /var/lib/traceprotocol 2>/dev/null || true
 sleep 0.3
 
-# Step 8: Final Cleanup
-CURRENT_STEP=8
+# Step 7: Final Cleanup
+CURRENT_STEP=7
 show_progress $CURRENT_STEP $TOTAL_STEPS "Final cleanup"
 DEBIAN_FRONTEND=noninteractive apt-get autoremove -y >/dev/null 2>&1 || true
 DEBIAN_FRONTEND=noninteractive apt-get autoclean >/dev/null 2>&1 || true
@@ -286,7 +280,6 @@ echo -e "${CYAN}  System Packages Kept${NC}"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 echo -e "  ${BLUE}•${NC}  AppArmor (core system security)"
-echo -e "  ${BLUE}•${NC}  UFW firewall (disabled)"
 echo -e "  ${BLUE}•${NC}  Core networking utilities"
 echo ""
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
