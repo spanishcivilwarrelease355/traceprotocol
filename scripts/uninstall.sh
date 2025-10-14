@@ -143,13 +143,41 @@ systemctl disable dnscrypt-proxy 2>/dev/null || true
 systemctl disable dnscrypt-proxy2 2>/dev/null || true
 sleep 0.3
 
-# Step 3: Remove DNSCrypt-Proxy
+# Step 3: Remove DNSCrypt-Proxy and Restore DNS
 CURRENT_STEP=3
-show_progress $CURRENT_STEP $TOTAL_STEPS "Removing DNSCrypt-Proxy"
+show_progress $CURRENT_STEP $TOTAL_STEPS "Restoring DNS and removing DNSCrypt"
+
+# Restore original DNS configuration
+if [ -f /etc/resolv.conf.traceprotocol-backup ]; then
+    # Remove immutable flag
+    chattr -i /etc/resolv.conf 2>/dev/null || true
+    
+    # Restore backup
+    cp /etc/resolv.conf.traceprotocol-backup /etc/resolv.conf 2>/dev/null || true
+    rm -f /etc/resolv.conf.traceprotocol-backup 2>/dev/null || true
+else
+    # If no backup, just unlock and let NetworkManager regenerate
+    chattr -i /etc/resolv.conf 2>/dev/null || true
+fi
+
+# Remove NetworkManager DNSCrypt configuration
+rm -f /etc/NetworkManager/conf.d/dnscrypt.conf 2>/dev/null || true
+
+# Re-enable systemd-resolved if it was installed
+if command -v systemd-resolve &>/dev/null || [ -f /lib/systemd/systemd-resolved ]; then
+    systemctl enable systemd-resolved 2>/dev/null || true
+    systemctl start systemd-resolved 2>/dev/null || true
+fi
+
+# Restart NetworkManager to apply DNS changes
+systemctl restart NetworkManager 2>/dev/null || true
+
+# Remove DNSCrypt-Proxy files
 rm -f /usr/local/bin/dnscrypt-proxy 2>/dev/null || true
 rm -rf /etc/dnscrypt-proxy 2>/dev/null || true
 rm -f /etc/systemd/system/dnscrypt-proxy.service 2>/dev/null || true
 systemctl daemon-reload 2>/dev/null || true
+
 sleep 0.3
 
 # Step 4: Disable Firewall
@@ -251,6 +279,7 @@ echo -e "  ${GREEN}✓${NC}  ProtonVPN CLI and privacy packages"
 echo -e "  ${GREEN}✓${NC}  Tor, DNSCrypt, AppArmor services"
 echo -e "  ${GREEN}✓${NC}  Conky desktop widget"
 echo -e "  ${GREEN}✓${NC}  All configurations and user data"
+echo -e "  ${GREEN}✓${NC}  DNSCrypt DNS configuration (restored original DNS)"
 echo ""
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "${CYAN}  System Packages Kept${NC}"

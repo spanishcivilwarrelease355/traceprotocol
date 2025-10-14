@@ -274,6 +274,58 @@ if systemctl is-active --quiet dnscrypt-proxy; then
 else
     echo "[$(date +%Y-%m-%d\ %H:%M:%S)] WARNING: DNSCrypt-Proxy service may not have started (check logs)" >> "$LOG_FILE"
 fi
+
+# Configure system DNS to use DNSCrypt-Proxy
+echo "[$(date +%Y-%m-%d\ %H:%M:%S)] Configuring system DNS to use DNSCrypt-Proxy..." >> "$LOG_FILE"
+
+# Backup original resolv.conf
+if [ ! -f /etc/resolv.conf.traceprotocol-backup ]; then
+    cp /etc/resolv.conf /etc/resolv.conf.traceprotocol-backup >> "$LOG_FILE" 2>&1
+    echo "[$(date +%Y-%m-%d\ %H:%M:%S)] Original resolv.conf backed up" >> "$LOG_FILE"
+fi
+
+# Stop systemd-resolved if running (conflicts with DNSCrypt on port 53)
+if systemctl is-active --quiet systemd-resolved 2>/dev/null; then
+    echo "[$(date +%Y-%m-%d\ %H:%M:%S)] Stopping systemd-resolved (port 53 conflict)..." >> "$LOG_FILE"
+    systemctl stop systemd-resolved >> "$LOG_FILE" 2>&1
+    systemctl disable systemd-resolved >> "$LOG_FILE" 2>&1
+fi
+
+# Create NetworkManager configuration to use DNSCrypt-Proxy
+mkdir -p /etc/NetworkManager/conf.d
+cat > /etc/NetworkManager/conf.d/dnscrypt.conf << 'DNSEOF'
+[main]
+dns=none
+systemd-resolved=false
+
+[global-dns]
+searches=
+
+[global-dns-domain-*]
+servers=127.0.0.1
+DNSEOF
+
+echo "[$(date +%Y-%m-%d\ %H:%M:%S)] NetworkManager configured to use DNSCrypt-Proxy" >> "$LOG_FILE"
+
+# Remove immutable flag if set
+chattr -i /etc/resolv.conf 2>/dev/null || true
+
+# Update resolv.conf to use DNSCrypt-Proxy
+cat > /etc/resolv.conf << 'RESOLVEOF'
+# DNSCrypt-Proxy DNS Configuration (TraceProtocol)
+# DNS queries are encrypted via DNSCrypt-Proxy
+nameserver 127.0.0.1
+options edns0
+RESOLVEOF
+
+# Make it immutable to prevent NetworkManager from overwriting
+chattr +i /etc/resolv.conf 2>/dev/null || true
+
+echo "[$(date +%Y-%m-%d\ %H:%M:%S)] System DNS configured to use 127.0.0.1 (DNSCrypt-Proxy)" >> "$LOG_FILE"
+
+# Restart NetworkManager to apply DNS changes
+systemctl restart NetworkManager >> "$LOG_FILE" 2>&1
+
 sleep 0.5
 
 # --- Step 7: Configure Firewall (UFW) - Configure but keep disabled ---
@@ -571,10 +623,11 @@ echo -e "${CYAN}  What Was Installed${NC}"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 echo -e "  ${GREEN}✓${NC}  ProtonVPN CLI"
-echo -e "  ${GREEN}✓${NC}  Tor, DNSCrypt-Proxy, AppArmor"
+echo -e "  ${GREEN}✓${NC}  Tor, DNSCrypt-Proxy (DNS: 127.0.0.1), AppArmor"
 echo -e "  ${GREEN}✓${NC}  Privacy tools (macchanger, firejail, bleachbit)"
 echo -e "  ${GREEN}✓${NC}  Conky desktop widget (top-right corner)"
 echo -e "  ${GREEN}✓${NC}  UFW firewall (configured, not yet enabled)"
+echo -e "  ${GREEN}✓${NC}  DNS encryption via DNSCrypt-Proxy (nameserver 127.0.0.1)"
 echo ""
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "${CYAN}  ⚠  IMPORTANT: Next Step Required${NC}"
