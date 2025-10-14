@@ -49,14 +49,20 @@ echo ""
 
 # Check if MAC address was already randomized during install
 MAC_BACKUP_FILE="/var/lib/traceprotocol/original_mac.txt"
-INTERFACE=$(ip route | grep default | awk '{print $5}' | head -1)
+
+# Find physical network interface (exclude lo, proton0, tun0, etc.)
+INTERFACE=$(ip link show | grep -E "^[0-9]+: (wl|eth|en)" | grep "state UP" | head -1 | awk -F': ' '{print $2}')
+if [ -z "$INTERFACE" ]; then
+    # If no UP interface, just get first physical interface
+    INTERFACE=$(ip link show | grep -E "^[0-9]+: (wl|eth|en)" | head -1 | awk -F': ' '{print $2}')
+fi
 
 if [ -f "$MAC_BACKUP_FILE" ] && [ -n "$INTERFACE" ]; then
     ORIGINAL_MAC=$(cat "$MAC_BACKUP_FILE" 2>/dev/null)
     CURRENT_MAC=$(ip link show "$INTERFACE" | grep "link/ether" | awk '{print $2}')
     
     if [ -n "$ORIGINAL_MAC" ] && [ -n "$CURRENT_MAC" ] && [ "$ORIGINAL_MAC" != "$CURRENT_MAC" ]; then
-        echo -e "${GREEN}✓ MAC address already randomized during installation${NC}"
+        echo -e "${GREEN}✓ MAC address already randomized${NC}"
         echo -e "${BLUE}Interface:${NC}     $INTERFACE"
         echo -e "${BLUE}Original MAC:${NC}  $ORIGINAL_MAC"
         echo -e "${BLUE}Current MAC:${NC}   $CURRENT_MAC"
