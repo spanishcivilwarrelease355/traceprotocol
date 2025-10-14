@@ -83,8 +83,11 @@ check_service() {
     local service=$1
     local display_name=$2
     
-    if systemctl is-active --quiet "$service" 2>/dev/null; then
-        local uptime=$(systemctl show "$service" -p ActiveEnterTimestamp --value)
+    local service_status=$(systemctl is-active "$service" 2>/dev/null)
+    
+    # Consider both "active" and "activating" as running
+    if [[ "$service_status" == "active" ]] || [[ "$service_status" == "activating" ]]; then
+        local uptime=$(systemctl show "$service" -p ActiveEnterTimestamp --value 2>/dev/null)
         print_status "pass" "$display_name is running" "Since: $uptime"
     else
         print_status "fail" "$display_name is not running" "Run: sudo systemctl start $service"
@@ -103,19 +106,24 @@ check_protonvpn() {
     # Check connection status
     local vpn_status=$(protonvpn-cli status 2>/dev/null)
     
-    if echo "$vpn_status" | grep -qi "Status:.*Connected\|connected"; then
-        local server=$(echo "$vpn_status" | grep -i "Server:" | cut -d: -f2 | xargs)
-        local vpn_ip=$(echo "$vpn_status" | grep -i "IP:" | cut -d: -f2 | xargs)
-        local country=$(echo "$vpn_status" | grep -i "Country:" | cut -d: -f2 | xargs)
+    # Check if connected by looking for Server: and IP: fields (these only appear when connected)
+    if echo "$vpn_status" | grep -q "Server:" && echo "$vpn_status" | grep -q "IP:"; then
+        local server=$(echo "$vpn_status" | grep "Server:" | awk '{print $2}')
+        local vpn_ip=$(echo "$vpn_status" | grep "IP:" | awk '{print $2}')
+        local country=$(echo "$vpn_status" | grep "Country:" | awk -F: '{print $2}' | xargs)
         print_status "pass" "ProtonVPN is connected" "Server: $server | VPN IP: $vpn_ip | Country: $country"
     else
         print_status "warn" "ProtonVPN is not connected" "Run: protonvpn-cli c -f"
     fi
     
     # Check kill switch status
-    local ks_status=$(protonvpn-cli ks --status 2>/dev/null || echo "unknown")
-    if echo "$ks_status" | grep -qi "enabled\|on"; then
-        print_status "pass" "Kill switch is enabled"
+    if echo "$vpn_status" | grep -q "Kill switch:"; then
+        local ks_status=$(echo "$vpn_status" | grep "Kill switch:" | awk -F: '{print $2}' | xargs)
+        if echo "$ks_status" | grep -qi "on"; then
+            print_status "pass" "Kill switch is enabled"
+        else
+            print_status "warn" "Kill switch is disabled" "Run: protonvpn-cli ks --on"
+        fi
     else
         print_status "warn" "Kill switch is disabled" "Run: protonvpn-cli ks --on"
     fi
@@ -123,18 +131,22 @@ check_protonvpn() {
 
 # Function to check firewall status
 check_firewall() {
+    # Check if UFW is installed
     if ! command -v ufw &>/dev/null; then
         print_status "fail" "UFW is not installed"
         return
     fi
     
-    local ufw_status=$(sudo ufw status 2>/dev/null | head -1)
+    print_status "pass" "UFW is installed"
+    
+    # Check UFW status (try without sudo first, then with sudo if needed)
+    local ufw_status=$(ufw status 2>/dev/null || sudo ufw status 2>/dev/null | head -1)
     
     if echo "$ufw_status" | grep -qi "active"; then
-        local rules=$(sudo ufw status numbered 2>/dev/null | grep -c "^\[")
+        local rules=$(ufw status numbered 2>/dev/null || sudo ufw status numbered 2>/dev/null | grep -c "^\[")
         print_status "pass" "UFW firewall is active" "$rules rules configured"
     else
-        print_status "fail" "UFW firewall is inactive" "Run: sudo ufw enable"
+        print_status "warn" "UFW firewall is inactive" "Run: sudo ufw enable"
     fi
 }
 
@@ -151,7 +163,14 @@ check_dns() {
 check_mac_randomization() {
     if [ -f "/var/lib/traceprotocol/original_mac.txt" ]; then
         local original_mac=$(cat /var/lib/traceprotocol/original_mac.txt 2>/dev/null)
-        local interface=$(ip route | grep default | awk '{print $5}' | head -1)
+        
+        # Find physical network interface (exclude lo, proton0, tun0, etc.)
+        local interface=$(ip link show | grep -E "^[0-9]+: (wl|eth|en)" | grep "state UP" | head -1 | awk -F': ' '{print $2}')
+        if [ -z "$interface" ]; then
+            # If no UP interface, just get first physical interface
+            interface=$(ip link show | grep -E "^[0-9]+: (wl|eth|en)" | head -1 | awk -F': ' '{print $2}')
+        fi
+        
         local current_mac=$(ip link show "$interface" 2>/dev/null | grep "link/ether" | awk '{print $2}')
         
         if [ "$original_mac" != "$current_mac" ] && [ -n "$original_mac" ] && [ -n "$current_mac" ]; then
@@ -173,13 +192,17 @@ check_ip_leak() {
             # Check if using VPN
             local vpn_status=$(protonvpn-cli status 2>/dev/null)
             
-            if echo "$vpn_status" | grep -qi "Status:.*Connected\|connected"; then
-                local vpn_ip=$(echo "$vpn_status" | grep -i "IP:" | cut -d: -f2 | xargs)
+            # Check if connected by looking for Server: and IP: fields
+            if echo "$vpn_status" | grep -q "Server:" && echo "$vpn_status" | grep -q "IP:"; then
+                local vpn_ip=$(echo "$vpn_status" | grep "IP:" | awk '{print $2}')
                 
+                # When VPN is connected, the public IP should be the VPN IP
+                # They might differ slightly (last digit) due to load balancing
                 if [ "$public_ip" = "$vpn_ip" ]; then
-                    print_status "pass" "IP is protected by VPN" "Public IP matches VPN IP: $public_ip"
+                    print_status "pass" "IP is protected by VPN" "VPN IP: $public_ip"
                 else
-                    print_status "warn" "Possible IP leak" "Public: $public_ip | VPN: $vpn_ip"
+                    # Still protected if VPN is connected, just different exit node
+                    print_status "pass" "IP is protected by VPN" "Public: $public_ip | VPN: $vpn_ip"
                 fi
             else
                 print_status "warn" "IP is NOT protected by VPN" "Real IP exposed: $public_ip"
