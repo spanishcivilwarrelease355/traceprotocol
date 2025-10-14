@@ -235,9 +235,37 @@ if [[ "$connect_vpn" =~ ^[Yy]$ ]]; then
         fi
     fi
     
-    # Step 4: Enable UFW Firewall
+    # Step 4: Enable DNSCrypt-Proxy
     echo ""
-    echo -e "${CYAN}Step 4: Enable Firewall${NC}"
+    echo -e "${CYAN}Step 4: Enable DNSCrypt-Proxy${NC}"
+    echo ""
+    
+    # Check if DNSCrypt-Proxy service is enabled and running
+    echo -e "${BLUE}Checking DNSCrypt-Proxy status...${NC}"
+    if systemctl is-active --quiet dnscrypt-proxy 2>/dev/null; then
+        echo -e "${GREEN}✓ DNSCrypt-Proxy is already running${NC}"
+        echo ""
+    else
+        echo -e "${YELLOW}DNSCrypt-Proxy is not running. Starting service...${NC}"
+        
+        if sudo systemctl enable dnscrypt-proxy 2>/dev/null && sudo systemctl start dnscrypt-proxy 2>/dev/null; then
+            sleep 2
+            if systemctl is-active --quiet dnscrypt-proxy; then
+                echo -e "${GREEN}✓ DNSCrypt-Proxy enabled and started!${NC}"
+            else
+                echo -e "${YELLOW}⚠ DNSCrypt-Proxy may not be running properly${NC}"
+                echo "Check status with: sudo systemctl status dnscrypt-proxy"
+            fi
+        else
+            echo -e "${YELLOW}⚠ Failed to start DNSCrypt-Proxy${NC}"
+            echo "You can start it manually with: sudo systemctl start dnscrypt-proxy"
+        fi
+        echo ""
+    fi
+    
+    # Step 5: Enable UFW Firewall
+    echo ""
+    echo -e "${CYAN}Step 5: Enable Firewall${NC}"
     echo ""
     
     # Check if UFW is already enabled
@@ -296,9 +324,9 @@ else
     echo "You can connect later with: protonvpn-cli c -f"
 fi
 
-# Step 5: Restart Conky Widget
+# Step 6: Restart Conky Widget
 echo ""
-echo -e "${CYAN}Step 5: Restart Conky Widget${NC}"
+echo -e "${CYAN}Step 6: Restart Conky Widget${NC}"
 echo ""
 echo -e "${BLUE}Refreshing desktop monitor...${NC}"
 
@@ -330,6 +358,7 @@ echo ""
 echo -e "${BLUE}Your privacy protection is now active:${NC}"
 echo "  ✓ VPN connected"
 echo "  ✓ Kill switch enabled (if you chose yes)"
+echo "  ✓ DNSCrypt-Proxy encrypting DNS queries"
 echo "  ✓ Firewall enabled (if you chose yes)"
 echo "  ✓ Conky widget monitoring status"
 echo ""
