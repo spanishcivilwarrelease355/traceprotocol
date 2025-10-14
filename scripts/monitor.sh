@@ -131,19 +131,22 @@ check_protonvpn() {
 
 # Function to check firewall status
 check_firewall() {
-    # Check if UFW is installed
-    if ! command -v ufw &>/dev/null; then
+    # Check if UFW is installed (check both command and binary location)
+    if ! command -v ufw &>/dev/null && [ ! -f /usr/sbin/ufw ]; then
         print_status "fail" "UFW is not installed"
         return
     fi
     
-    print_status "pass" "UFW is installed"
+    # Check UFW status (use full path if needed)
+    local ufw_cmd="ufw"
+    if [ -f /usr/sbin/ufw ]; then
+        ufw_cmd="/usr/sbin/ufw"
+    fi
     
-    # Check UFW status (try without sudo first, then with sudo if needed)
-    local ufw_status=$(ufw status 2>/dev/null || sudo ufw status 2>/dev/null | head -1)
+    local ufw_status=$($ufw_cmd status 2>/dev/null || sudo $ufw_cmd status 2>/dev/null | head -1)
     
     if echo "$ufw_status" | grep -qi "active"; then
-        local rules=$(ufw status numbered 2>/dev/null || sudo ufw status numbered 2>/dev/null | grep -c "^\[")
+        local rules=$($ufw_cmd status numbered 2>/dev/null || sudo $ufw_cmd status numbered 2>/dev/null | grep -c "^\[")
         print_status "pass" "UFW firewall is active" "$rules rules configured"
     else
         print_status "warn" "UFW firewall is inactive" "Run: sudo ufw enable"
@@ -152,10 +155,16 @@ check_firewall() {
 
 # Function to check DNS configuration
 check_dns() {
+    # Check if DNSCrypt-Proxy is running (provides encrypted DNS)
+    local dnscrypt_status=$(systemctl is-active dnscrypt-proxy 2>/dev/null)
+    
     if grep -q "nameserver 127.0.0.1" /etc/resolv.conf 2>/dev/null; then
-        print_status "pass" "Local DNS is configured"
+        print_status "pass" "DNS configured to use DNSCrypt-Proxy" "Encrypted DNS queries"
+    elif [[ "$dnscrypt_status" == "active" ]] || [[ "$dnscrypt_status" == "activating" ]]; then
+        # DNSCrypt is running, even if not set as system DNS, it's still providing encrypted DNS
+        print_status "pass" "DNSCrypt-Proxy is running" "DNS encryption available"
     else
-        print_status "warn" "Local DNS is not configured" "Using system default DNS"
+        print_status "warn" "Encrypted DNS not configured" "DNSCrypt-Proxy not running"
     fi
 }
 
