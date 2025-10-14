@@ -150,17 +150,8 @@ check_firewall() {
         local rules=$($ufw_cmd status numbered 2>/dev/null || sudo $ufw_cmd status numbered 2>/dev/null | grep -c "^ *\[")
         print_status "pass" "UFW firewall is active" "$rules rules configured"
     else
-        # UFW is inactive - check if rules are configured
-        if [ -f /etc/ufw/user.rules ]; then
-            local configured_rules=$(grep -c "^-A ufw-user-output" /etc/ufw/user.rules 2>/dev/null || echo "0")
-            if [ "$configured_rules" -gt 0 ]; then
-                print_status "warn" "UFW firewall is inactive" "Configured but not enabled | $configured_rules rules ready | Run: sudo ufw enable"
-            else
-                print_status "warn" "UFW firewall is inactive" "Run: sudo ufw enable"
-            fi
-        else
-            print_status "warn" "UFW firewall is inactive" "Run: sudo ufw enable"
-        fi
+        # UFW is inactive
+        print_status "warn" "UFW firewall is inactive" "Rules will be configured on first enable | Run: sudo ufw enable or ./trace-protocol.sh firewall-on"
     fi
 }
 
