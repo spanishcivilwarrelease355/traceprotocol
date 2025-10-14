@@ -258,8 +258,11 @@ check_package "macchanger" "MAC Changer"
     echo -e "${CYAN}━━━ Service Status ━━━${NC}"
     check_service "tor" "Tor"
     # Check DNSCrypt-Proxy service
-    if systemctl is-active --quiet dnscrypt-proxy 2>/dev/null; then
-        local uptime=$(systemctl show dnscrypt-proxy -p ActiveEnterTimestamp --value)
+    local dnscrypt_status=$(systemctl is-active dnscrypt-proxy 2>/dev/null)
+    
+    # Consider both "active" and "activating" as running
+    if [[ "$dnscrypt_status" == "active" ]] || [[ "$dnscrypt_status" == "activating" ]]; then
+        local uptime=$(systemctl show dnscrypt-proxy -p ActiveEnterTimestamp --value 2>/dev/null)
         print_status "pass" "DNSCrypt-Proxy is running" "Since: $uptime"
     else
         print_status "fail" "DNSCrypt-Proxy is not running" "Run: sudo systemctl start dnscrypt-proxy"
