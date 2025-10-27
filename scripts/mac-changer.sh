@@ -4,11 +4,15 @@
 # Randomizes MAC address on specified network interface
 
 # Colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
+RED='\033[38;5;196m'
+GREEN='\033[38;5;46m'
+YELLOW='\033[38;5;226m'  
+WHITE='\033[1;37m'
+BLUE='\033[38;5;27m'       
+CYAN='\033[38;5;51m'       
+MAGENTA='\033[38;5;201m'   
 NC='\033[0m'
+
 
 # File to store original MAC
 MAC_BACKUP_FILE="/var/lib/traceprotocol/original_mac.txt"
@@ -18,14 +22,29 @@ INTERFACE_FILE="/var/lib/traceprotocol/interface.txt"
 sudo mkdir -p /var/lib/traceprotocol
 sudo chmod 755 /var/lib/traceprotocol
 
-# Get the active network interface
+# Get the active network interface (excluding VPN interfaces)
 get_active_interface() {
-    # Get default route interface
-    INTERFACE=$(ip route | grep default | awk '{print $5}' | head -1)
+    # First check if we have a saved interface from install
+    if [ -f "$INTERFACE_FILE" ]; then
+        local saved_interface=$(cat "$INTERFACE_FILE")
+        # Verify the saved interface still exists and is not a VPN interface
+        if ip link show "$saved_interface" >/dev/null 2>&1 && ! echo "$saved_interface" | grep -qE "^(tun|tap|proton|wg|vpn)"; then
+            echo "$saved_interface"
+            return
+        fi
+    fi
     
+    # Get physical network interfaces (exclude VPN, loopback, docker, etc.)
+    INTERFACE=$(ip link show | grep -E "^[0-9]+: (eth|wlan|wlp|enp|ens)" | grep "state UP" | head -1 | awk -F: '{print $2}' | tr -d ' ')
+    
+    # If no UP interface, get any physical interface
     if [ -z "$INTERFACE" ]; then
-        # Fallback: get first non-loopback interface
-        INTERFACE=$(ip link show | grep -v "lo:" | grep "state UP" | awk -F: '{print $2}' | tr -d ' ' | head -1)
+        INTERFACE=$(ip link show | grep -E "^[0-9]+: (eth|wlan|wlp|enp|ens)" | head -1 | awk -F: '{print $2}' | tr -d ' ')
+    fi
+    
+    # Fallback: get first non-VPN, non-loopback interface
+    if [ -z "$INTERFACE" ]; then
+        INTERFACE=$(ip link show | grep -v "lo:" | grep -vE "(tun|tap|proton|wg|vpn|docker|br-)" | grep "state UP" | awk -F: '{print $2}' | tr -d ' ' | head -1)
     fi
     
     echo "$INTERFACE"
@@ -66,7 +85,7 @@ get_current_mac() {
 randomize_mac() {
     local interface=$1
     
-    echo -e "${BLUE}Randomizing MAC address on $interface...${NC}"
+    echo -e "${YELLOW}Randomizing MAC address on $interface...${NC}"
     
     # Bring interface down
     sudo ip link set dev "$interface" down
@@ -77,7 +96,6 @@ randomize_mac() {
     # Bring interface up
     sudo ip link set dev "$interface" up
     
-    echo -e "${GREEN}✓ MAC address randomized!${NC}"
 }
 
 # Restore original MAC
@@ -85,7 +103,7 @@ restore_mac() {
     local interface=$1
     local original_mac=$2
     
-    echo -e "${BLUE}Restoring original MAC address on $interface...${NC}"
+    echo -e "${YELLOW}Restoring original MAC address on $interface...${NC}"
     
     # Bring interface down
     sudo ip link set dev "$interface" down
@@ -96,7 +114,6 @@ restore_mac() {
     # Bring interface up
     sudo ip link set dev "$interface" up
     
-    echo -e "${GREEN}✓ Original MAC address restored!${NC}"
 }
 
 # Main execution
@@ -115,25 +132,22 @@ main() {
     CURRENT_MAC=$(get_current_mac "$INTERFACE")
     
     echo ""
-    echo -e "${CYAN}TraceProtocol MAC Address Manager${NC}"
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo ""
-    echo -e "${BLUE}Interface:${NC}     $INTERFACE"
-    echo -e "${BLUE}Original MAC:${NC}  $ORIGINAL_MAC"
-    echo -e "${BLUE}Current MAC:${NC}   $CURRENT_MAC"
+    echo -e "${MAGENTA}Interface:${NC}     ${WHITE}$INTERFACE${NC}"
+    echo -e "${MAGENTA}Original MAC:${NC}  ${WHITE}$ORIGINAL_MAC${NC}"
+    echo -e "${MAGENTA}Current MAC:${NC}   ${WHITE}$CURRENT_MAC${NC}"
     echo ""
     
     if [ "$1" = "randomize" ] || [ "$1" = "random" ]; then
         randomize_mac "$INTERFACE"
         NEW_MAC=$(get_current_mac "$INTERFACE")
         echo ""
-        echo -e "${GREEN}New MAC:${NC}       $NEW_MAC"
+        echo -e "${MAGENTA}New MAC:${NC}       ${WHITE}$NEW_MAC${NC}"
         echo ""
     elif [ "$1" = "restore" ]; then
         restore_mac "$INTERFACE" "$ORIGINAL_MAC"
         NEW_MAC=$(get_current_mac "$INTERFACE")
         echo ""
-        echo -e "${GREEN}Current MAC:${NC}   $NEW_MAC"
+        echo -e "${MAGENTA}Current MAC:${NC}   ${WHITE}$NEW_MAC${NC}"
         echo ""
     else
         echo "Usage:"
